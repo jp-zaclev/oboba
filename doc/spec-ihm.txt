@@ -1,0 +1,30 @@
+# Structure de l’IHM d’Oboba
+
+## Layout général
+
+- **Barre de navigation (haut)** :
+  - Logo Oboba | Tableau de bord | Projets | Administration (admin uniquement) | Aide | Déconnexion
+- **Menu latéral (gauche, contextuel)** :
+  - Pour un projet sélectionné : Aperçu | Équipements | Connecteurs | Câbles | Borniers | Signaux | Conducteurs | Catalogue Projet | Rapports
+- **Zone de contenu (centre)** :
+  - Tableaux avec filtres, formulaires déroulants, détails des entités.
+- **Barre de notification (haut)** :
+  - Messages d’erreur ou de succès (ex. "Les extrémités doivent être distinctes") affichés pendant 5 secondes.
+- **Footer** :
+  - Version du logiciel, lien vers la documentation.
+
+---
+
+## Pages principales
+
+### Page : Tableau de bord
+
+- **Objectif** : Vue d’ensemble des projets accessibles à l’utilisateur connecté.
+- **Contenu** :
+  - **Tableau des projets** :
+    - Colonnes : Nom, Date création, Date dernière modification, Rôle (Propriétaire/Concepteur/Lecteur).
+    - Actions : 
+      - "Voir" (accessible à tous).
+      - "Éditer" (propriétaire ou concepteur uniquement).
+  - **Bouton** : "Nouveau projet" (visible pour admin ou propriétaire).
+- **Exemple** :

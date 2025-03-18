@@ -1,0 +1,32 @@
+@startuml
+actor Administrateur
+actor Proprietaire
+actor Concepteur
+actor Lecteur
+
+Administrateur --> (Créer un utilisateur)
+Administrateur --> (Détruire un projet)
+Administrateur --> (Modifier les droits d’un utilisateur)
+Administrateur --> (Gérer les catalogues modèles)
+
+Proprietaire --> (Créer un projet)
+Proprietaire --> (Homologuer un utilisateur)
+Proprietaire --> (Consulter la liste des projets)
+
+Concepteur --> (Ajouter un câble)
+Concepteur --> (Modifier un bornier)
+Concepteur --> (Associer un signal)
+Concepteur --> (Consulter le catalogue projet)
+Concepteur --> (Modifier le catalogue projet)
+
+Lecteur --> (Consulter la liste des câbles)
+Lecteur --> (Consulter la liste des signaux)
+Lecteur --> (Consulter le catalogue projet)
+
+(Créer un projet) .> (Copier les catalogues modèles) : <<include>>
+
+note right of Administrateur
+  Super-utilisateur avec droits implicites sur tout
+end note
+
+@enduml

@@ -1,0 +1,149 @@
+@startuml
+' Classes principales
+class Utilisateur {
+  -id: int
+  -nom: String
+  -email: String
+}
+
+class Projet {
+  -id: int
+  -nom: String
+  -id_utilisateur_proprietaire: int
+  -liste_ids_utilisateurs_lecteurs: int[]
+  -liste_ids_utilisateurs_concepteurs: int[]
+  -date_heure_creation: DateTime
+  -date_heure_derniere_modification: DateTime
+}
+
+class Signal {
+  -id: int
+  -nom: String
+  -type: Enum {analogique, digital}
+  -details: String
+  -id_projet: int
+}
+
+' Catalogues modèles
+class CatalogueModeleCables {
+  -id: int
+  -nom: String
+  -type: String
+  -nombre_conducteurs_max: int
+  -prix_metre: float
+}
+
+class CatalogueModeleBorniers {
+  -id: int
+  -nom: String
+  -nombre_bornes: int
+  -caracteristiques: String
+  -prix_unitaire: float
+}
+
+class CatalogueModeleConnecteurs {
+  -id: int
+  -nom: String
+  -nombre_contacts: int
+  -type: String
+  -prix_unitaire: float
+}
+
+' Catalogues spécifiques aux projets
+class CatalogueProjetCables {
+  -id: int
+  -id_projet: int
+  -nom: String
+  -type: String
+  -nombre_conducteurs_max: int
+  -prix_metre: float
+}
+
+class CatalogueProjetBorniers {
+  -id: int
+  -id_projet: int
+  -nom: String
+  -nombre_bornes: int
+  -caracteristiques: String
+  -prix_unitaire: float
+}
+
+class CatalogueProjetConnecteurs {
+  -id: int
+  -id_projet: int
+  -nom: String
+  -nombre_contacts: int
+  -type: String
+  -prix_unitaire: float
+}
+
+' Entités du câblage
+class Cable {
+  -id: int
+  -nom: String
+  -id_catalogue_projet_cable: int
+  -id_projet: int
+}
+
+class Conducteur {
+  -id: int
+  -id_cable: int
+  -attribut: String
+}
+
+class Bornier {
+  -id: int
+  -nom: String
+  -id_catalogue_projet_bornier: int
+  -id_projet: int
+}
+
+class Borne {
+  -id: int
+  -id_bornier: int
+  -identification: String
+}
+
+class Connecteur {
+  -id: int
+  -nom: String
+  -id_catalogue_projet_connecteur: int
+  -id_projet: int
+}
+
+class Contact {
+  -id: int
+  -id_connecteur: int
+  -identifiant: String
+  -type: Enum {emission, reception, emission_reception}
+}
+
+' Relations
+Utilisateur "1" -- "0..*" Projet : possede
+Utilisateur "0..*" -- "0..*" Projet : lit/concoit
+Projet "1" -- "0..*" Signal
+Projet "1" -- "0..*" CatalogueProjetCables
+Projet "1" -- "0..*" CatalogueProjetBorniers
+Projet "1" -- "0..*" CatalogueProjetConnecteurs
+Projet "1" -- "0..*" Cable
+Projet "1" -- "0..*" Bornier
+Projet "1" -- "0..*" Connecteur
+
+CatalogueProjetCables "1" -- "0..*" Cable
+CatalogueProjetBorniers "1" -- "0..*" Bornier
+CatalogueProjetConnecteurs "1" -- "0..*" Connecteur
+
+Cable "1" -- "0..*" Conducteur
+Bornier "1" -- "0..*" Borne
+Connecteur "1" -- "0..*" Contact
+
+Signal "1" -- "0..*" Conducteur
+Conducteur "0..1" -- "0..1" Borne
+Conducteur "0..1" -- "0..1" Contact
+
+' Note sur les catalogues modèles (pas de relation directe avec les projets)
+note right of CatalogueModeleCables
+  Copié dans CatalogueProjetCables lors de la création d’un projet
+end note
+
+@enduml

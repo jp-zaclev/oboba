@@ -1,0 +1,442 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\geometry{margin=2cm}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xurl} % Ajout pour gérer les URL avec retour à la ligne
+
+\title{Spécifications du logiciel Oboba}
+\author{}
+\date{18 mars 2025}
+
+\begin{document}
+
+\maketitle
+
+\begin{center}
+    \textit{Projet : Gestion des câbles et connecteurs dans une application Symfony offline}
+\end{center}
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+Le logiciel Oboba vise à simplifier la conception, la gestion et la documentation des câblages industriels en offrant une interface intuitive et une gestion fine des droits d’accès. Ce document décrit les spécifications détaillées d’un logiciel de conception et de gestion de câblage industriel, incluant les câbles, borniers, et connecteurs, ainsi que leurs composants (conducteurs, bornes, contacts) et signaux (analogiques ou numériques).
+
+L’implémentation actuelle se concentre sur la gestion des utilisateurs, projets, câbles et connecteurs dans une application Symfony offline, avec des fonctionnalités de liste paginée, ajout, modification, suppression, filtrage, et exportation en CSV.
+
+\section{Objectifs}
+\begin{itemize}
+    \item Permettre la gestion de multiples projets indépendants avec des catalogues spécifiques.
+    \item Offrir une interface utilisateur responsive et intuitive basée sur Bootstrap.
+    \item Gérer les droits d’accès via des rôles (lecteur, concepteur, propriétaire, administrateur).
+    \item Supporter la consultation, la saisie, et l’exportation des données de câblage.
+\end{itemize}
+
+\section{Entités et Relations}
+
+\subsection{Utilisateur}
+\begin{itemize}
+    \item \textbf{Attributs} :
+    \begin{itemize}
+        \item \texttt{id} : \texttt{INT PRIMARY KEY AUTO\_INCREMENT}
+        \item \texttt{nom} : \texttt{VARCHAR(255)}
+        \item \texttt{email} : \texttt{VARCHAR(255)}
+        \item \texttt{password} : \texttt{VARCHAR(255)}
+        \item \texttt{roles} : \texttt{JSON}
+    \end{itemize}
+    \item \textbf{Comportements} : Se connecter, consulter les projets autorisés, gérer les utilisateurs (administrateur uniquement).
+    \item \textbf{Implémentation} : Table \texttt{utilisateur}, relation \texttt{OneToMany} avec \texttt{ProjetUtilisateur}.
+    \item \textbf{Statut} : Implémenté avec gestion complète (CRUD, authentification).
+\end{itemize}
+
+\subsection{Projet}
+\begin{itemize}
+    \item \textbf{Attributs} :
+    \begin{itemize}
+        \item \texttt{id} : \texttt{INT PRIMARY KEY AUTO\_INCREMENT}
+        \item \texttt{nom} : \texttt{VARCHAR(255) NOT NULL}
+        \item \texttt{description} : \texttt{TEXT NULL}
+        \item \texttt{date\_heure\_creation} : \texttt{DATETIME}
+    \end{itemize}
+    \item \textbf{Implémentation} : Table \texttt{projet}, relations \texttt{OneToMany} avec \texttt{Cable}, \texttt{Connecteur}, \texttt{ProjetUtilisateur}.
+    \item \textbf{Statut} : Implémenté (liste des projets par utilisateur disponible).
+\end{itemize}
+
+\subsection{Signal}
+\begin{itemize}
+    \item \textbf{Attributs} :
+    \begin{itemize}
+        \item \texttt{id} : \texttt{INT PRIMARY KEY AUTO\_INCREMENT}
+        \item \texttt{nom} : \texttt{VARCHAR(255)}
+        \item \texttt{type} : \texttt{ENUM('analogique', 'digital')}
+        \item \texttt{details} : \texttt{VARCHAR(255)} (ex. "tension 24V")
+        \item \texttt{id\_projet} : \texttt{INT} (référence à \texttt{Projet})
+    \end{itemize}
+    \item \textbf{Relations} : Lié à un ou plusieurs \texttt{Conducteurs}.
+    \item \textbf{Statut} : Non implémenté.
+\end{itemize}
+
+\subsection{Catalogue Modèle des Câbles}
+\begin{itemize}
+    \item \textbf{Attributs} :
+    \begin{itemize}
+        \item \texttt{id} : \texttt{INT PRIMARY KEY AUTO\_INCREMENT}
+        \item \texttt{nom} : \texttt{VARCHAR(255)}
+        \item \texttt{type} : \texttt{VARCHAR(255)} (ex. "coaxial")
+        \item \texttt{nombre\_conducteurs\_max} : \texttt{INT}
+        \item \texttt{prix\_metre} : \texttt{DECIMAL(10,2)}
+    \end{itemize}
+    \item \textbf{Statut} : Non implémenté.
+\end{itemize}
+
+\subsection{Catalogue Projet des Câbles}
+\begin{itemize}
+    \item \textbf{Table} : \texttt{catalogue\_projet\_cables}
+    \item \textbf{Attributs} :
+    \begin{itemize}
+        \item \texttt{id} : \texttt{INT PRIMARY KEY AUTO\_INCREMENT}
+        \item \texttt{id\_projet} : \texttt{INT NOT NULL} (référence à \texttt{Projet})
+        \item \texttt{nom} : \texttt{VARCHAR(255) NOT NULL}
+    \end{itemize}
+    \item \textbf{Relations} : Référencé par les \texttt{Câbles} du projet.
+    \item \textbf{Statut} : Implémenté.
+\end{itemize}
+
+\subsection{Câble}
+\begin{itemize}
+    \item \textbf{Table} : \texttt{cable}
+    \item \textbf{Attributs} :
+    \begin{itemize}
+        \item \texttt{id} : \texttt{INT PRIMARY KEY AUTO\_INCREMENT}
+        \item \texttt{nom} : \texttt{VARCHAR(255) NOT NULL}
+        \item \texttt{longueur} : \texttt{INT NOT NULL}
+        \item \texttt{id\_projet} : \texttt{INT NOT NULL} (référence à \texttt{Projet})
+        \item \texttt{id\_catalogue\_projet\_cable} : \texttt{INT NULL} (référence à \texttt{Catalogue Projet des Câbles})
+    \end{itemize}
+    \item \textbf{Relations} : Contient un ou plusieurs \texttt{Conducteurs}.
+    \item \textbf{Statut} : Implémenté (sans \texttt{Conducteurs} pour l’instant).
+\end{itemize}
+
+\subsection{Conducteur}
+\begin{itemize}
+    \item \textbf{Attributs} :
+    \begin{itemize}
+        \item \texttt{id} : \texttt{INT PRIMARY KEY AUTO\_INCREMENT}
+        \item \texttt{id\_cable} : \texttt{INT} (référence à \texttt{Câble})
+        \item \texttt{attribut} : \texttt{VARCHAR(255)} (ex. "couleur: rouge")
+        \item \texttt{id\_extremite\_source} : \texttt{INT NULL} (référence à \texttt{Borne} ou \texttt{Contact})
+        \item \texttt{id\_extremite\_destination} : \texttt{INT NULL} (référence à \texttt{Borne} ou \texttt{Contact})
+    \end{itemize}
+    \item \textbf{Relations} : Transporte un \texttt{Signal}.
+    \item \textbf{Statut} : Non implémenté.
+\end{itemize}
+
+\subsection{Catalogue Modèle des Borniers}
+\begin{itemize}
+    \item \textbf{Attributs} :
+    \begin{itemize}
+        \item \texttt{id} : \texttt{INT PRIMARY KEY AUTO\_INCREMENT}
+        \item \texttt{nom} : \texttt{VARCHAR(255)}
+        \item \texttt{nombre\_bornes} : \texttt{INT}
+        \item \texttt{caracteristiques} : \texttt{VARCHAR(255)}
+        \item \texttt{prix\_unitaire} : \texttt{DECIMAL(10,2)}
+    \end{itemize}
+    \item \textbf{Statut} : Non implémenté.
+\end{itemize}
+
+\subsection{Catalogue Projet des Borniers}
+\begin{itemize}
+    \item \textbf{Attributs} :
+    \begin{itemize}
+        \item \texttt{id} : \texttt{INT PRIMARY KEY AUTO\_INCREMENT}
+        \item \texttt{id\_projet} : \texttt{INT} (référence à \texttt{Projet})
+        \item \texttt{nom} : \texttt{VARCHAR(255)}
+        \item \texttt{nombre\_bornes} : \texttt{INT}
+        \item \texttt{caracteristiques} : \texttt{VARCHAR(255)}
+        \item \texttt{prix\_unitaire} : \texttt{DECIMAL(10,2)}
+    \end{itemize}
+    \item \textbf{Statut} : Non implémenté.
+\end{itemize}
+
+\subsection{Bornier}
+\begin{itemize}
+    \item \textbf{Attributs} :
+    \begin{itemize}
+        \item \texttt{id} : \texttt{INT PRIMARY KEY AUTO\_INCREMENT}
+        \item \texttt{nom} : \texttt{VARCHAR(255)}
+        \item \texttt{id\_catalogue\_projet\_bornier} : \texttt{INT} (référence à \texttt{Catalogue Projet des Borniers})
+        \item \texttt{id\_projet} : \texttt{INT} (référence à \texttt{Projet})
+        \item \texttt{localisation} : \texttt{VARCHAR(255)}
+    \end{itemize}
+    \item \textbf{Relations} : Contient une ou plusieurs \texttt{Bornes}.
+    \item \textbf{Statut} : Non implémenté.
+\end{itemize}
+
+\subsection{Borne}
+\begin{itemize}
+    \item \textbf{Attributs} :
+    \begin{itemize}
+        \item \texttt{id} : \texttt{INT PRIMARY KEY AUTO\_INCREMENT}
+        \item \texttt{id\_bornier} : \texttt{INT} (référence à \texttt{Bornier})
+        \item \texttt{identification} : \texttt{VARCHAR(255)} (ex. "1")
+    \end{itemize}
+    \item \textbf{Statut} : Non implémenté.
+\end{itemize}
+
+\subsection{Catalogue Modèle des Connecteurs}
+\begin{itemize}
+    \item \textbf{Attributs} :
+    \begin{itemize}
+        \item \texttt{id} : \texttt{INT PRIMARY KEY AUTO\_INCREMENT}
+        \item \texttt{nom} : \texttt{VARCHAR(255)}
+        \item \texttt{nombre\_contacts} : \texttt{INT}
+        \item \texttt{type} : \texttt{VARCHAR(255)}
+        \item \texttt{prix\_unitaire} : \texttt{DECIMAL(10,2)}
+    \end{itemize}
+    \item \textbf{Statut} : Non implémenté.
+\end{itemize}
+
+\subsection{Catalogue Projet des Connecteurs}
+\begin{itemize}
+    \item \textbf{Table} : \texttt{catalogue\_projet\_connecteurs}
+    \item \textbf{Attributs} :
+    \begin{itemize}
+        \item \texttt{id} : \texttt{INT PRIMARY KEY AUTO\_INCREMENT}
+        \item \texttt{id\_projet} : \texttt{INT NOT NULL} (référence à \texttt{Projet})
+        \item \texttt{nom} : \texttt{VARCHAR(255) NOT NULL}
+        \item \texttt{nombre\_contacts} : \texttt{INT NOT NULL}
+        \item \texttt{type} : \texttt{VARCHAR(50) NOT NULL}
+        \item \texttt{prix\_unitaire} : \texttt{DECIMAL(10,2) NOT NULL}
+    \end{itemize}
+    \item \textbf{Relations} : Référencé par les \texttt{Connecteurs} du projet.
+    \item \textbf{Statut} : Implémenté.
+\end{itemize}
+
+\subsection{Connecteur}
+\begin{itemize}
+    \item \textbf{Table} : \texttt{connecteur}
+    \item \textbf{Attributs} :
+    \begin{itemize}
+        \item \texttt{id} : \texttt{INT PRIMARY KEY AUTO\_INCREMENT}
+        \item \texttt{nom} : \texttt{VARCHAR(255) NOT NULL}
+        \item \texttt{id\_projet} : \texttt{INT NOT NULL} (référence à \texttt{Projet})
+        \item \texttt{id\_catalogue\_projet\_connecteur} : \texttt{INT NOT NULL} (référence à \texttt{Catalogue Projet des Connecteurs})
+    \end{itemize}
+    \item \textbf{Relations} : Contient un ou plusieurs \texttt{Contacts} (non implémenté).
+    \item \textbf{Statut} : Implémenté (sans \texttt{Contacts} ni localisation pour l’instant).
+\end{itemize}
+
+\subsection{Contact}
+\begin{itemize}
+    \item \textbf{Attributs} :
+    \begin{itemize}
+        \item \texttt{id} : \texttt{INT PRIMARY KEY AUTO\_INCREMENT}
+        \item \texttt{id\_connecteur} : \texttt{INT} (référence à \texttt{Connecteur})
+        \item \texttt{identifiant} : \texttt{VARCHAR(255)} (ex. "A")
+        \item \texttt{type} : \texttt{ENUM('emission', 'reception', 'emission\_reception')}
+    \end{itemize}
+    \item \textbf{Statut} : Non implémenté.
+\end{itemize}
+
+\subsection{Equipement}
+\begin{itemize}
+    \item \textbf{Attributs} :
+    \begin{itemize}
+        \item \texttt{id} : \texttt{INT PRIMARY KEY AUTO\_INCREMENT}
+        \item \texttt{nom} : \texttt{VARCHAR(255)}
+        \item \texttt{reference} : \texttt{VARCHAR(255)}
+        \item \texttt{id\_projet} : \texttt{INT} (référence à \texttt{Projet})
+    \end{itemize}
+    \item \textbf{Relations} : Peut être connecté à un ou plusieurs \texttt{Connecteurs}.
+    \item \textbf{Statut} : Non implémenté.
+\end{itemize}
+
+\subsection{Relations}
+- \textbf{Implémentées} : \texttt{Utilisateur} $\to$ \texttt{ProjetUtilisateur}, \texttt{Projet} $\to$ \texttt{Cable}, \texttt{Projet} $\to$ \texttt{Connecteur}, \texttt{Cable} $\to$ \texttt{CatalogueProjetCables}, \texttt{Connecteur} $\to$ \texttt{CatalogueProjetConnecteurs}.
+- \textbf{Non implémentées} : \texttt{Conducteurs}, \texttt{Borniers}, \texttt{Contacts}, \texttt{Signaux}, \texttt{Equipements}.
+
+\section{Fonctionnalités Principales}
+
+\subsection{Gestion des Utilisateurs}
+\begin{itemize}
+    \item \textbf{Spécification} : Comptes avec rôles (administrateur, propriétaire, concepteur, lecteur).
+    \item \textbf{Implémentation} : CRUD complet via \texttt{UtilisateurController}, rôles \texttt{ROLE\_ADMIN} et \texttt{ROLE\_USER} gérés, authentification par formulaire.
+    \item \textbf{Statut} : Implémenté.
+\end{itemize}
+
+\subsection{Consultation de la Liste des Projets}
+\begin{itemize}
+    \item \textbf{Spécification} : Liste avec détails et suppression par l’administrateur.
+    \item \textbf{Implémentation} : Liste des projets de l’utilisateur connecté via \texttt{/projets/mes-projets}, pas encore de suppression par l’administrateur.
+    \item \textbf{Statut} : Partiellement implémenté.
+\end{itemize}
+
+\subsection{Consultation de la Liste des Câbles}
+\begin{itemize}
+    \item \textbf{Spécification} : Liste avec filtres (nom, type, prix max).
+    \item \textbf{Implémentation} : Liste paginée (10 par page), filtres : \texttt{nom}, \texttt{longueurMin}, \texttt{longueurMax}, \texttt{catalogueProjetCables}, colonnes : \texttt{Nom}, \texttt{Longueur}, \texttt{Catalogue Projet}, \texttt{Actions}.
+    \item \textbf{Statut} : Implémenté (sans \texttt{Conducteurs} ni prix max).
+\end{itemize}
+
+\subsection{Consultation de la Liste des Signaux}
+\begin{itemize}
+    \item \textbf{Spécification} : Liste avec filtres et détails de transit.
+    \item \textbf{Statut} : Non implémenté.
+\end{itemize}
+
+\subsection{Saisie et Modification des Données (Concepteur)}
+\begin{itemize}
+    \item \textbf{Spécification} : CRUD pour câbles, borniers, connecteurs, signaux.
+    \item \textbf{Implémentation} :
+    \begin{itemize}
+        \item \textbf{Câbles} : Ajout, modification, suppression avec catalogue optionnel.
+        \item \textbf{Connecteurs} : Ajout, modification, suppression avec catalogue obligatoire.
+    \end{itemize}
+    \item \textbf{Statut} : Partiellement implémenté (câbles et connecteurs uniquement).
+\end{itemize}
+
+\subsection{Gestion des Catalogues}
+\begin{itemize}
+    \item \textbf{Spécification} : Catalogues modèles et spécifiques aux projets.
+    \item \textbf{Implémentation} : \texttt{CatalogueProjetCables} et \texttt{CatalogueProjetConnecteurs} spécifiques aux projets.
+    \item \textbf{Statut} : Partiellement implémenté (catalogues modèles non faits).
+\end{itemize}
+
+\subsection{Gestion des Erreurs}
+\begin{itemize}
+    \item \textbf{Spécification} : Messages d’erreur pour références invalides, connexions impossibles, etc.
+    \item \textbf{Implémentation} : Validation \texttt{NotBlank} pour \texttt{nom} et \texttt{catalogueProjetConnecteurs} (connecteurs), confirmation popup pour suppression.
+    \item \textbf{Statut} : Partiellement implémenté.
+\end{itemize}
+
+\subsection{Règles de Propagation des Signaux}
+\begin{itemize}
+    \item \textbf{Spécification} : Propagation avec détection des conflits.
+    \item \textbf{Statut} : Non implémenté.
+\end{itemize}
+
+\subsection{Fonctionnalités Avancées}
+\begin{itemize}
+    \item \textbf{Spécification} : Export CSV/PDF, rapports, historique.
+    \item \textbf{Implémentation} : Export CSV pour câbles et connecteurs.
+    \item \textbf{Statut} : Partiellement implémenté (CSV uniquement).
+\end{itemize}
+
+\section{Spécifications de l’Interface Utilisateur}
+\begin{itemize}
+    \item \textbf{Spécification} : Tableaux triables, formulaires déroulants, messages temporaires.
+    \item \textbf{Implémentation} : Tableaux paginés avec Bootstrap, formulaires simples avec \texttt{form\_widget}, messages flash pour succès/erreurs.
+    \item \textbf{Statut} : Implémenté.
+\end{itemize}
+
+\section{Exigences Non Fonctionnelles}
+\begin{itemize}
+    \item \textbf{Performance} : Listes en < 10s pour 500 éléments (respecté avec pagination).
+    \item \textbf{Sécurité} : Authentification et sessions (implémenté).
+    \item \textbf{Ergonomie} : Interface responsive avec Bootstrap.
+    \item \textbf{Scalabilité} : Non testé.
+\end{itemize}
+
+\section{Contraintes Techniques}
+\begin{itemize}
+    \item \textbf{Serveur HTTP} : PHP intégré (serveur de dev).
+    \item \textbf{Langage} : PHP 8.x.
+    \item \textbf{Framework} : Symfony.
+    \item \textbf{Base de données} : MariaDB.
+    \item \textbf{ORM} : Doctrine.
+\end{itemize}
+
+\section{Architecture Technique}
+\begin{itemize}
+    \item \textbf{Modèle} : MVC avec Symfony.
+    \item \textbf{Base de données} : MariaDB avec tables actuelles (\texttt{utilisateur}, \texttt{projet}, \texttt{cable}, \texttt{connecteur}, etc.).
+    \item \textbf{API} : Non implémenté.
+\end{itemize}
+
+\section{Implémentation Actuelle}
+
+\subsection{Routes}
+\begin{longtable}{|p{3.5cm}|p{4.5cm}|p{2cm}|p{4cm}|}
+\hline
+\textbf{Nom} & \textbf{URL} & \textbf{Méthode} & \textbf{Description} \\ \hline
+\texttt{utilisateurs\_gestion} & \url{/utilisateurs/gestion} & GET & Liste des utilisateurs \\ \hline
+\texttt{utilisateur\_new} & \url{/utilisateurs/new} & GET/POST & Ajout d’un utilisateur \\ \hline
+\texttt{utilisateur\_edit} & \url{/utilisateurs/\{id\}/edit} & GET/POST & Modification d’un utilisateur \\ \hline
+\texttt{utilisateur\_supprimer} & \url{/utilisateurs/\{id\}} & POST & Suppression d’un utilisateur \\ \hline
+\texttt{mes\_projets} & \url{/projets/mes-projets} & GET & Liste des projets de l’utilisateur \\ \hline
+\texttt{cable\_list} & \url{/projet/\{projetId\}/cables} & GET & Liste des câbles \\ \hline
+\texttt{cable\_new} & \url{/projet/\{projetId\}/cables/new} & GET/POST & Ajout d’un câble \\ \hline
+\texttt{cable\_edit} & \url{/projet/\{projetId\}/cables/\{id\}/edit} & GET/POST & Modification d’un câble \\ \hline
+\texttt{cable\_delete} & \url{/projet/\{projetId\}/cables/\{id\}} & POST & Suppression d’un câble \\ \hline
+\texttt{cable\_export\_csv} & \url{/projet/\{projetId\}/cables/export} & GET & Export CSV des câbles \\ \hline
+\texttt{connecteur\_list} & \url{/projet/\{projetId\}/connecteurs} & GET & Liste des connecteurs \\ \hline
+\texttt{connecteur\_new} & \url{/projet/\{projetId\}/connecteurs/new} & GET/POST & Ajout d’un connecteur \\ \hline
+\texttt{connecteur\_edit} & \url{/projet/\{projetId\}/connecteurs/\{id\}/edit} & GET/POST & Modification d’un connecteur \\ \hline
+\texttt{connecteur\_delete} & \url{/projet/\{projetId\}/connecteurs/\{id\}} & POST & Suppression d’un connecteur \\ \hline
+\texttt{connecteur\_export\_csv} & \url{/projet/\{projetId\}/connecteurs/export} & GET & Export CSV des connecteurs \\ \hline
+\end{longtable}
+
+\subsection{Formulaires}
+\begin{itemize}
+    \item \textbf{UtilisateurType} : \texttt{nom}, \texttt{email}, \texttt{roles}, \texttt{plainPassword} (non mappé, requis pour création).
+    \item \textbf{CableType} : \texttt{nom}, \texttt{longueur}, \texttt{catalogueProjetCables} (optionnel).
+    \item \textbf{CableFilterType} : \texttt{nom}, \texttt{longueurMin}, \texttt{longueurMax}, \texttt{catalogueProjetCables}.
+    \item \textbf{ConnecteurType} : \texttt{nom}, \texttt{catalogueProjetConnecteurs} (obligatoire).
+    \item \textbf{ConnecteurFilterType} : \texttt{nom}, \texttt{nombreContacts}, \texttt{type}, \texttt{catalogueProjetConnecteurs}.
+\end{itemize}
+
+\subsection{Templates}
+\begin{itemize}
+    \item \textbf{Utilisateurs} : \texttt{gestion.html.twig}, \texttt{new.html.twig}, \texttt{edit.html.twig}.
+    \item \textbf{Projets} : \texttt{mes\_projets.html.twig}.
+    \item \textbf{Câbles} : \texttt{list.html.twig}, \texttt{new.html.twig}, \texttt{edit.html.twig}.
+    \item \textbf{Connecteurs} : \texttt{list.html.twig}, \texttt{new.html.twig}, \texttt{edit.html.twig}.
+    \item \textbf{Style} : Bootstrap 4, rendu par défaut via \texttt{form\_widget}.
+\end{itemize}
+
+\subsection{Contraintes et Sécurité}
+\begin{itemize}
+    \item \textbf{Rôles} : \texttt{ROLE\_ADMIN}, \texttt{ROLE\_USER} (hiérarchie définie).
+    \item \textbf{CSRF} : Validé pour suppressions.
+    \item \textbf{Validation} : \texttt{NotBlank} sur champs requis.
+    \item \textbf{Sessions} : Stockées dans \texttt{var/sessions}.
+\end{itemize}
+
+\section{Scénarios}
+
+\subsection{Scénario 1 : Création d’un projet et ajout d’un câblage}
+\begin{itemize}
+    \item \textbf{Implémenté} : Ajout de câbles et connecteurs avec catalogue.
+    \item \textbf{Non implémenté} : \texttt{Conducteurs}, \texttt{Borniers}, \texttt{Signaux}.
+\end{itemize}
+
+\subsection{Scénario 2 : Consultation par un lecteur}
+\begin{itemize}
+    \item \textbf{Implémenté} : Liste des câbles et connecteurs avec filtres.
+    \item \textbf{Non implémenté} : \texttt{Signaux}.
+\end{itemize}
+
+\subsection{Scénario 3 : Modification du catalogue projet}
+\begin{itemize}
+    \item \textbf{Non implémenté}.
+\end{itemize}
+
+\subsection{Scénario 4 : Tentative de connexion invalide}
+\begin{itemize}
+    \item \textbf{Implémenté} : Gestion des erreurs d’authentification via \texttt{form\_login}.
+\end{itemize}
+
+\section{Conclusion}
+L’implémentation actuelle couvre la gestion des utilisateurs, projets, câbles et connecteurs avec un CRUD complet, des filtres, et un export CSV. Les bases sont posées pour étendre aux borniers, conducteurs, signaux, et équipements. Les prochaines étapes incluent :
+\begin{itemize}
+    \item Ajout des entités manquantes (\texttt{Conducteur}, \texttt{Bornier}, \texttt{Signal}, etc.).
+    \item Gestion complète des projets (suppression par admin, rôles multiples).
+    \item Propagation des signaux et rapports avancés.
+\end{itemize}
+
+\end{document}
