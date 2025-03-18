@@ -1,0 +1,19 @@
+{# templates/cable/edit.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier un câble - {{ projet.nom }}{% endblock %}
+
+{% block body %}
+    <h1>Modifier {{ cable.nom }} pour {{ projet.nom }}</h1>
+
+    {{ form_start(form) }}
+        {{ form_widget(form) }}
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+    {{ form_end(form) }}
+
+    <a href="{{ path('cable_list', {'projetId': projet.id}) }}" class="btn btn-secondary mt-3">Retour à la liste</a>
+
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger mt-3">{{ message }}</div>
+    {% endfor %}
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des projets{% endblock %}
+
+{% block body %}
+    <h1>Liste des projets</h1>
+    <a href="{{ path('projet_new') }}" class="btn btn-primary mb-3">Ajouter un projet</a>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Date de création</th>
+                <th>Dernière modification</th>
+                <th>Propriétaire</th>
+                <th>Concepteurs</th>
+                <th>Lecteurs</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for projet in projets %}
+                <tr>
+                    <td>{{ projet.nom }}</td>
+                    <td>{{ projet.dateHeureCreation|date('d/m/Y H:i') }}</td>
+                    <td>{{ projet.dateHeureDerniereModification|date('d/m/Y H:i') }}</td>
+                    <td>{{ projet.proprietaire ? projet.proprietaire.nom : '-' }}</td>
+                    <td>{{ projet.concepteurs|map(c => c.nom)|join(', ') }}</td>
+                    <td>{{ projet.lecteurs|map(l => l.nom)|join(', ') }}</td>
+                    <td>
+                        <a href="{{ path('projet_edit', {'id': projet.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                        <form method="post" action="{{ path('projet_delete', {'id': projet.id}) }}" style="display:inline;" onsubmit="return confirm('Confirmer la suppression ?');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ projet.id) }}">
+                            <button class="btn btn-sm btn-danger">Supprimer</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success mt-3">{{ message }}</div>
+    {% endfor %}
+{% endblock %}

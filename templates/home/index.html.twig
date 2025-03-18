@@ -1,0 +1,45 @@
+{# templates/home/index.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Bienvenue sur Oboba{% endblock %}
+
+{% block body %}
+    <div class="home-container">
+        <img src="{{ asset('images/logo.png') }}" alt="Logo Oboba" class="logo">
+        <a href="{{ path('login') }}" class="btn btn-primary btn-lg">S'identifier</a>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .home-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #e6f0fa; /* Bleu clair, ajustable */
+            text-align: center;
+            padding: 20px;
+        }
+        .logo {
+            max-width: 300px; /* Ajuste selon la taille de ton logo */
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            padding: 10px 20px;
+            font-size: 1.25rem;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+    </style>
+{% endblock %}

@@ -1,0 +1,74 @@
+{# templates/cable/list.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des câbles - {{ projet.nom }}{% endblock %}
+
+{% block body %}
+    <h1>Liste des câbles pour {{ projet.nom }}</h1>
+
+    <div class="mb-3">
+        <div class="row g-2">
+            {% if is_granted('CAN_EDIT_CABLES', projet) %}
+                <div class="col-auto">
+                    <a href="{{ path('cable_new', {'projetId': projet.id}) }}" class="btn btn-primary">Ajouter un câble</a>
+                </div>
+            {% endif %}
+            <div class="col-auto">
+                <a href="{{ path('cable_export_csv', {'projetId': projet.id, 'page': app.request.query.get('page', 1)}|merge(app.request.query.all)) }}" class="btn btn-success">Exporter en CSV</a>
+            </div>
+        </div>
+    </div>
+
+    {{ form_start(filter_form, {'method': 'GET'}) }}
+        <div class="row mb-3">
+            <div class="col">{{ form_row(filter_form.nom) }}</div>
+            <div class="col">{{ form_row(filter_form.longueurMin) }}</div>
+            <div class="col">{{ form_row(filter_form.longueurMax) }}</div>
+            <div class="col">{{ form_row(filter_form.catalogueProjetCables) }}</div>
+            <div class="col">
+                <button type="submit" class="btn btn-primary mt-4">Filtrer</button>
+            </div>
+        </div>
+    {{ form_end(filter_form) }}
+
+    {% if cables is empty %}
+        <p>Aucun câble trouvé pour ce projet.</p>
+    {% else %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Longueur</th>
+                    <th>Catalogue</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cable in cables %}
+                    <tr>
+                        <td>{{ cable.nom }}</td>
+                        <td>{{ cable.longueur }}</td>
+                        <td>{{ cable.catalogueProjetCables ? cable.catalogueProjetCables.nom : 'N/A' }}</td>
+                        <td>
+                            {% if is_granted('CAN_EDIT_CABLES', projet) %}
+                                <a href="{{ path('cable_edit', {'id': cable.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                                <form method="post" action="{{ path('cable_delete', {'id': cable.id}) }}" style="display:inline;" onsubmit="return confirm('Supprimer ce câble ?');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ cable.id) }}">
+                                    <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="navigation">
+            {{ knp_pagination_render(cables) }}
+        </div>
+    {% endif %}
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+{% endblock %}

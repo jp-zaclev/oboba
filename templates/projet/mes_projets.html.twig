@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes projets{% endblock %}
+
+{% block body %}
+    <h1>Mes projets</h1>
+
+    {% if projets is empty %}
+        <p>Aucun projet associé à votre compte.</p>
+    {% else %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Rôle</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for projet in projets %}
+                    <tr>
+                        <td>{{ projet.nom }}</td>
+                        <td>
+                            {% for pu in projet.projetUtilisateurs|filter(pu => pu.utilisateur == app.user) %}
+                                {{ pu.role|capitalize }}
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% set role = projet.projetUtilisateurs|filter(pu => pu.utilisateur == app.user)|first.role %}
+                            {% if role in ['proprietaire', 'concepteur'] %}
+                                <a href="{{ path('cable_list', {'projetId': projet.id}) }}" class="btn btn-sm btn-info">Câbles</a>
+                                <a href="{{ path('connecteur_list', {'projetId': projet.id}) }}" class="btn btn-sm btn-info">Connecteurs</a>
+                            {% else %}
+                                <span class="text-muted">Consultation uniquement</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+{% endblock %}

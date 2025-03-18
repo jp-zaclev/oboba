@@ -1,0 +1,78 @@
+{# templates/connecteur/list.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des connecteurs - {{ projet.nom }}{% endblock %}
+
+{% block body %}
+    <h1>Liste des connecteurs pour {{ projet.nom }}</h1>
+
+    <div class="mb-3">
+        <div class="row g-2">
+            {% if is_granted('CAN_EDIT_CONNECTEURS', projet) %}
+                <div class="col-auto">
+                    <a href="{{ path('connecteur_new', {'projetId': projet.id}) }}" class="btn btn-primary">Ajouter un connecteur</a>
+                </div>
+            {% endif %}
+            <div class="col-auto">
+                <a href="{{ path('connecteur_export_csv', {'projetId': projet.id, 'page': app.request.query.get('page', 1)}|merge(app.request.query.all)) }}" class="btn btn-success">Exporter en CSV</a>
+            </div>
+        </div>
+    </div>
+
+    {{ form_start(filter_form, {'method': 'GET'}) }}
+        <div class="row mb-3">
+            <div class="col">{{ form_row(filter_form.nom) }}</div>
+            <div class="col">{{ form_row(filter_form.nombreContacts) }}</div>
+            <div class="col">{{ form_row(filter_form.type) }}</div>
+            <div class="col">{{ form_row(filter_form.catalogueProjetConnecteurs) }}</div>
+            <div class="col">
+                <button type="submit" class="btn btn-primary mt-4">Filtrer</button>
+            </div>
+        </div>
+    {{ form_end(filter_form) }}
+
+    {% if connecteurs is empty %}
+        <p>Aucun connecteur trouvé pour ce projet.</p>
+    {% else %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Catalogue Projet</th>
+                    <th>Nombre de Contacts</th>
+                    <th>Type</th>
+                    <th>Prix Unitaire</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for connecteur in connecteurs %}
+                    <tr>
+                        <td>{{ connecteur.nom }}</td>
+                        <td>{{ connecteur.catalogueProjetConnecteurs ? connecteur.catalogueProjetConnecteurs.nom : 'N/A' }}</td>
+                        <td>{{ connecteur.catalogueProjetConnecteurs ? connecteur.catalogueProjetConnecteurs.nombreContacts : 'N/A' }}</td>
+                        <td>{{ connecteur.catalogueProjetConnecteurs ? connecteur.catalogueProjetConnecteurs.type : 'N/A' }}</td>
+                        <td>{{ connecteur.catalogueProjetConnecteurs ? connecteur.catalogueProjetConnecteurs.prixUnitaire : 'N/A' }}</td>
+                        <td>
+                            {% if is_granted('CAN_EDIT_CONNECTEURS', projet) %}
+                                <a href="{{ path('connecteur_edit', {'projetId': projet.id, 'id': connecteur.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                                <form method="post" action="{{ path('connecteur_delete', {'projetId': projet.id, 'id': connecteur.id}) }}" style="display:inline;" onsubmit="return confirm('Supprimer ce connecteur ?');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ connecteur.id) }}">
+                                    <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="navigation">
+            {{ knp_pagination_render(connecteurs) }}
+        </div>
+    {% endif %}
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+{% endblock %}
