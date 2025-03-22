@@ -1,0 +1,75 @@
+{# templates/catalogue_modele_cables/list.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Catalogue des modèles de câbles - Oboba{% endblock %}
+
+{% block body %}
+    <h1>Catalogue des modèles de câbles</h1>
+
+    <div class="mb-3">
+        <div class="row g-2">
+            <div class="col-auto">
+                <a href="{{ path('catalogue_modele_cables_new') }}" class="btn btn-primary">Ajouter un modèle de câble</a>
+            </div>
+        </div>
+    </div>
+
+    {{ form_start(filter_form, {'method': 'GET'}) }}
+        <div class="row mb-3">
+            <div class="col">{{ form_row(filter_form.nom, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.type, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.nombreConducteursMaxMin, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.nombreConducteursMaxMax, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.prixMetreMin, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.prixMetreMax, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">
+                <button type="submit" class="btn btn-primary mt-4">Filtrer</button>
+            </div>
+        </div>
+    {{ form_end(filter_form) }}
+
+    {% if catalogues is empty %}
+        <p>Aucun modèle de câble disponible pour le moment.</p>
+    {% else %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Type</th>
+                    <th>Nombre max de conducteurs</th>
+                    <th>Prix au mètre</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for catalogue in catalogues %}
+                    <tr>
+                        <td>{{ catalogue.nom }}</td>
+                        <td>{{ catalogue.type }}</td>
+                        <td>{{ catalogue.nombreConducteursMax }}</td>
+                        <td>{{ catalogue.prixMetre|number_format(2, '.', ',') }}</td>
+                        <td>
+                            <a href="{{ path('catalogue_modele_cables_edit', {'id': catalogue.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                            <form method="post" action="{{ path('catalogue_modele_cables_delete', {'id': catalogue.id}) }}" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer ce modèle ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ catalogue.id) }}">
+                                <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="navigation">
+            {{ knp_pagination_render(catalogues) }}
+        </div>
+    {% endif %}
+
+    {% for message in app.flashes %}
+        {% for msg in message %}
+            <div class="alert alert-{{ loop.parent.loop.key == 'success' ? 'success' : 'danger' }} mt-3">
+                {{ msg }}
+            </div>
+        {% endfor %}
+    {% endfor %}
+{% endblock %}

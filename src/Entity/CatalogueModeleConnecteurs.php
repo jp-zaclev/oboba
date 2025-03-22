@@ -4,7 +4,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Table(name="catalogue_modele_connecteurs")
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="App\Repository\CatalogueModeleConnecteursRepository")
  */
 class CatalogueModeleConnecteurs
 {
@@ -33,7 +33,7 @@ class CatalogueModeleConnecteurs
     /**
      * @ORM\Column(type="decimal", precision=10, scale=2)
      */
-    private $prixUnitaire;
+    private $prixUnitaire = "0.00"; // Ajout de la valeur par défaut
 
     // Getters et Setters
     public function getId(): ?int { return $this->id; }

@@ -19,6 +19,8 @@
                         {% if is_granted('ROLE_ADMIN') %}
                             <a class="nav-link" href="{{ path('projet_list') }}">Gestion des projets</a>
                             <a class="nav-link" href="{{ path('utilisateurs_gestion') }}">Gestion des utilisateurs</a>
+                            <a class="nav-link" href="{{ path('catalogue_modele_cables_list') }}">Catalogue Modèles Câbles</a>
+                            <a class="nav-link" href="{{ path('catalogue_modele_connecteurs_list') }}">Catalogue Modèles Connecteurs</a>
                         {% endif %}
                         <div class="nav-item text-end">
                             <a class="nav-link" href="{{ path('logout') }}">Déconnexion</a>
