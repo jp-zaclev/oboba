@@ -20,11 +20,11 @@
         </thead>
         <tbody>
             {% for projet in projets %}
-                <tr>
+                <tr {% if not projet.proprietaire %}class="table-warning"{% endif %}>
                     <td>{{ projet.nom }}</td>
                     <td>{{ projet.dateHeureCreation|date('d/m/Y H:i') }}</td>
                     <td>{{ projet.dateHeureDerniereModification|date('d/m/Y H:i') }}</td>
-                    <td>{{ projet.proprietaire ? projet.proprietaire.nom : '-' }}</td>
+                    <td>{{ projet.proprietaires|map(p => p.nom)|join(', ') ?: '-' }}</td>
                     <td>{{ projet.concepteurs|map(c => c.nom)|join(', ') }}</td>
                     <td>{{ projet.lecteurs|map(l => l.nom)|join(', ') }}</td>
                     <td>
@@ -33,6 +33,9 @@
                             <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ projet.id) }}">
                             <button class="btn btn-sm btn-danger">Supprimer</button>
                         </form>
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <a href="{{ path('projet_assigner_proprietaire', {'id': projet.id}) }}" class="btn btn-sm btn-info mt-1">Assigner un propriétaire</a>
+                        {% endif %}
                     </td>
                 </tr>
             {% endfor %}

@@ -26,6 +26,7 @@
                         {% endif %}
                     </td>
                     <td>
+                        <a href="{{ path('utilisateur_show', {'id': utilisateur.id}) }}" class="btn btn-sm btn-info">Voir</a>
                         <a href="{{ path('utilisateur_edit', {'id': utilisateur.id}) }}" class="btn btn-sm btn-primary">Modifier</a>
                         <form method="post" action="{{ path('utilisateur_supprimer', {'id': utilisateur.id}) }}" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer cet utilisateur ?');">
                             <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ utilisateur.id) }}">

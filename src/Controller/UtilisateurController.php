@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Utilisateur;
 use App\Form\UtilisateurType;
+use App\Entity\ProjetUtilisateur;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -80,16 +81,39 @@ class UtilisateurController extends AbstractController
         ]);
     }
 
-    #[Route('/utilisateurs/{id}', name: 'utilisateur_supprimer', methods: ['POST'])]
-    public function supprimer(Request $request, Utilisateur $utilisateur, EntityManagerInterface $em): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+	#[Route('/utilisateurs/{id}', name: 'utilisateur_supprimer', methods: ['POST'])]
+	    public function supprimer(Request $request, Utilisateur $utilisateur, EntityManagerInterface $em): Response
+	    {
+		if ($this->isCsrfTokenValid('delete'.$utilisateur->getId(), $request->request->get('_token'))) {
+		    // Dissocier les ProjetUtilisateur
+		    $projetUtilisateurs = $em->getRepository(ProjetUtilisateur::class)->findBy(['utilisateur' => $utilisateur]);
+		    foreach ($projetUtilisateurs as $pu) {
+		        $pu->setUtilisateur(null); // Met utilisateur_id à NULL
+		        $em->persist($pu);
+		    }
 
-        if ($this->isCsrfTokenValid('delete'.$utilisateur->getId(), $request->request->get('_token'))) {
-            $em->remove($utilisateur);
-            $em->flush();
-        }
+		    $em->remove($utilisateur);
+		    $em->flush();
 
-        return $this->redirectToRoute('utilisateurs_gestion');
-    }
+		    $this->addFlash('success', 'Utilisateur supprimé avec succès. Les projets associés sont désormais orphelins.');
+		} else {
+		    $this->addFlash('danger', 'Erreur de sécurité lors de la suppression.');
+		}
+
+		return $this->redirectToRoute('utilisateurs_gestion');
+	    }	
+	
+	#[Route('/utilisateur/{id}', name: 'utilisateur_show', methods: ['GET'])]
+	public function show(Utilisateur $utilisateur): Response
+	{
+	    $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+	    return $this->render('utilisateur/show.html.twig', [
+		'utilisateur' => $utilisateur,
+		'projetsProprietaire' => $utilisateur->getProjetsProprietaire(),
+		'projetsConcepteur' => $utilisateur->getProjetsConcepteur(),
+		'projetsLecteur' => $utilisateur->getProjetsLecteur(),
+	    ]);
+	}
+
 }

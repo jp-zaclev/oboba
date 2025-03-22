@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Assigner un propriétaire - {{ projet.nom }} - Oboba{% endblock %}
+
+{% block body %}
+    <div class="d-flex flex-column min-vh-100">
+        <h1>Assigner un propriétaire pour {{ projet.nom }}</h1>
+
+        {{ form_start(form) }}
+            <div class="mb-3">
+                {{ form_label(form.utilisateur) }}
+                {{ form_widget(form.utilisateur, {'attr': {'class': 'form-select'}}) }}
+            </div>
+            <div class="text-end">
+                <a href="{{ path('projet_list') }}" class="btn btn-secondary me-2">Retour</a>
+                {{ form_widget(form.submit, {'attr': {'class': 'btn btn-primary'}}) }}
+            </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

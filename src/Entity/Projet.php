@@ -24,7 +24,7 @@ class Projet
     private $nom;
 
     /**
-     * @ORM\OneToMany(targetEntity="ProjetUtilisateur", mappedBy="projet")
+     * @ORM\OneToMany(targetEntity=ProjetUtilisateur::class, mappedBy="projet", cascade={"persist", "remove"})
      */
     private $projetUtilisateurs;
 
@@ -33,11 +33,11 @@ class Projet
      */
     private $cables;
 
-   /**
+    /**
      * @ORM\OneToMany(targetEntity="Connecteur", mappedBy="projet")
      */
     private $connecteurs;
-    
+
     /**
      * @ORM\Column(type="datetime")
      */
@@ -61,9 +61,34 @@ class Projet
     public function getId(): ?int { return $this->id; }
     public function getNom(): ?string { return $this->nom; }
     public function setNom(string $nom): self { $this->nom = $nom; return $this; }
-    public function getProjetUtilisateurs(): Collection { return $this->projetUtilisateurs; }
-    public function addProjetUtilisateur(ProjetUtilisateur $pu): self { if (!$this->projetUtilisateurs->contains($pu)) { $this->projetUtilisateurs[] = $pu; $pu->setProjet($this); } return $this; }
-    public function removeProjetUtilisateur(ProjetUtilisateur $pu): self { if ($this->projetUtilisateurs->removeElement($pu)) { if ($pu->getProjet() === $this) { $pu->setProjet(null); } } return $this; }
+
+    /**
+     * @return Collection|ProjetUtilisateur[]
+     */
+    public function getProjetUtilisateurs(): Collection
+    {
+        return $this->projetUtilisateurs;
+    }
+
+    public function addProjetUtilisateur(ProjetUtilisateur $pu): self
+    {
+        if (!$this->projetUtilisateurs->contains($pu)) {
+            $this->projetUtilisateurs[] = $pu;
+            $pu->setProjet($this);
+        }
+        return $this;
+    }
+
+    public function removeProjetUtilisateur(ProjetUtilisateur $pu): self
+    {
+        if ($this->projetUtilisateurs->removeElement($pu)) {
+            if ($pu->getProjet() === $this) {
+                $pu->setProjet(null);
+            }
+        }
+        return $this;
+    }
+
     public function getDateHeureCreation(): ?\DateTimeInterface { return $this->dateHeureCreation; }
     public function setDateHeureCreation(\DateTimeInterface $date): self { $this->dateHeureCreation = $date; return $this; }
     public function getDateHeureDerniereModification(): ?\DateTimeInterface { return $this->dateHeureDerniereModification; }
@@ -96,7 +121,7 @@ class Projet
         return $this;
     }
 
-   /**
+    /**
      * @return Collection|Connecteur[]
      */
     public function getConnecteurs(): Collection
@@ -132,6 +157,14 @@ class Projet
             }
         }
         return null;
+    }
+    
+    public function getProprietaires(): array
+    {
+        return $this->projetUtilisateurs
+            ->filter(fn(ProjetUtilisateur $pu) => $pu->getRole() === 'proprietaire' && $pu->getUtilisateur() !== null)
+            ->map(fn(ProjetUtilisateur $pu) => $pu->getUtilisateur())
+            ->toArray();
     }
 
     public function getConcepteurs(): Collection

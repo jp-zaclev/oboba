@@ -1,0 +1,77 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ utilisateur.nom }} - Oboba{% endblock %}
+
+{% block body %}
+    <h1>{{ utilisateur.nom }}</h1>
+    <p>Email : {{ utilisateur.email }}</p>
+    <p>Statut : 
+        {% if 'ROLE_ADMIN' in utilisateur.roles %}
+            Administrateur
+        {% else %}
+            Utilisateur standard
+        {% endif %}
+    </p>
+
+    {% if projetsProprietaire is not empty %}
+        <h3>Projets en tant que propriétaire</h3>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nom du projet</th>
+                    <th>Date de création</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for projet in projetsProprietaire %}
+                    <tr>
+                        <td>{{ projet.nom }}</td>
+                        <td>{{ projet.dateHeureCreation|date('d/m/Y H:i') }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    {% if projetsConcepteur is not empty %}
+        <h3>Projets en tant que concepteur</h3>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nom du projet</th>
+                    <th>Date de création</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for projet in projetsConcepteur %}
+                    <tr>
+                        <td>{{ projet.nom }}</td>
+                        <td>{{ projet.dateHeureCreation|date('d/m/Y H:i') }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    {% if projetsLecteur is not empty %}
+        <h3>Projets en tant que lecteur</h3>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nom du projet</th>
+                    <th>Date de création</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for projet in projetsLecteur %}
+                    <tr>
+                        <td>{{ projet.nom }}</td>
+                        <td>{{ projet.dateHeureCreation|date('d/m/Y H:i') }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <a href="{{ path('utilisateurs_gestion') }}" class="btn btn-secondary">Retour à la gestion</a>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Recrutement - {{ projet.nom }} - Oboba{% endblock %}
+
+{% block body %}
+    <div class="d-flex flex-column min-vh-100">
+        <h1>Recrutement pour {{ projet.nom }}</h1>
+
+        <h2>Utilisateurs actuels</h2>
+        {% if projetUtilisateurs is empty %}
+            <p>Aucun utilisateur associé à ce projet.</p>
+        {% else %}
+            <table class="table table-striped mb-4">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Rôle</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pu in projetUtilisateurs %}
+                        <tr>
+                            <td>{{ pu.utilisateur.nom }}</td>
+                            <td>{{ pu.role|capitalize }}</td>
+                            <td>
+                                {% if isAdmin or (isProprietaire and pu.role in ['concepteur', 'lecteur']) %}
+                                    <form method="post" action="{{ path('projet_revoquer', {'id': projet.id, 'projetUtilisateurId': pu.id}) }}" 
+                                          onsubmit="return confirm('Voulez-vous vraiment révoquer cet utilisateur ?');">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('revoquer_' ~ pu.id) }}">
+                                        <button type="submit" class="btn btn-danger btn-sm">Révoquer</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        <h2>Ajouter des utilisateurs</h2>
+        {{ form_start(form) }}
+            <div id="recrutement-fields" 
+                 data-prototype-utilisateur="{{ form_widget(form.utilisateurs.vars.prototype)|e('html_attr') }}"
+                 data-prototype-role="{{ form_widget(form.roles.vars.prototype)|e('html_attr') }}">
+                {% for utilisateurField in form.utilisateurs %}
+                    <div class="row mb-2 align-items-center g-2">
+                        <div class="col-md-4 col-12">
+                            {{ form_widget(utilisateurField, {'attr': {'class': 'form-select'}}) }}
+                        </div>
+                        <div class="col-md-3 col-6">
+                            {{ form_widget(form.roles[loop.index0], {'attr': {'class': 'form-select'}}) }}
+                        </div>
+                        <div class="col-md-2 col-6">
+                            <button type="button" class="btn btn-danger btn-sm remove-row w-100">Supprimer</button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="button" class="btn btn-secondary mb-3 add-row">Ajouter un utilisateur</button>
+
+            <div class="mt-auto text-end">
+                <a href="{{ path('projet_mes_projets') }}" class="btn btn-secondary me-2">Retour à mes projets</a>
+                <button type="submit" class="btn btn-primary">Recruter</button>
+            </div>
+        {{ form_end(form) }}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('recrutement-fields');
+            const addButton = container.nextElementSibling;
+
+            let index = container.children.length;
+
+            addButton.addEventListener('click', () => {
+                const utilisateurPrototype = container.getAttribute('data-prototype-utilisateur').replace(/__name__/g, index);
+                const rolePrototype = container.getAttribute('data-prototype-role').replace(/__name__/g, index);
+
+                const row = document.createElement('div');
+                row.className = 'row mb-2 align-items-center g-2';
+                row.innerHTML = `
+                    <div class="col-md-4 col-12">${utilisateurPrototype}</div>
+                    <div class="col-md-3 col-6">${rolePrototype}</div>
+                    <div class="col-md-2 col-6">
+                        <button type="button" class="btn btn-danger btn-sm remove-row w-100">Supprimer</button>
+                    </div>
+                `;
+                container.appendChild(row);
+                index++;
+            });
+
+            container.addEventListener('click', (e) => {
+                if (e.target.classList.contains('remove-row')) {
+                    e.target.closest('.row').remove();
+                }
+            });
+        });
+    </script>
+{% endblock %}

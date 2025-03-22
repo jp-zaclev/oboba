@@ -5,6 +5,8 @@
 {% block body %}
     <h1>Mes projets</h1>
 
+    <a href="{{ path('projet_mes_projets_new') }}" class="btn btn-success mb-3">Créer un projet</a>
+
     {% if projets is empty %}
         <p>Aucun projet associé à votre compte.</p>
     {% else %}
@@ -33,11 +35,13 @@
                             {% else %}
                                 <span class="text-muted">Consultation uniquement</span>
                             {% endif %}
+                            {% if role == 'proprietaire' %}
+                                <a href="{{ path('projet_recrutement', {'id': projet.id}) }}" class="btn btn-sm btn-primary">Recrutement</a>
+                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
     {% endif %}
-
 {% endblock %}

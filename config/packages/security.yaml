@@ -32,6 +32,7 @@ security:
     - { path: ^/$, roles: PUBLIC_ACCESS }
     - { path: ^/projets/mes-projets, roles: IS_AUTHENTICATED_FULLY }
     - { path: ^/projet/.*/cables, roles: IS_AUTHENTICATED_FULLY }
+    - { path: ^/projets/\d+/recrutement, roles: IS_AUTHENTICATED_FULLY }
     - { path: ^/projets, roles: ROLE_ADMIN }
     - { path: ^/utilisateurs, roles: ROLE_ADMIN }
     - { path: ^/, roles: IS_AUTHENTICATED_FULLY }

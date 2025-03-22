@@ -22,7 +22,7 @@ class Contact
     private $connecteur;
 
     /**
-     * @ORM\Column(type="string", length=50)
+     * @ORM\Column(type="string", length=50, nullable=false)
      */
     private $identifiant;
 
@@ -35,8 +35,14 @@ class Contact
     public function getId(): ?int { return $this->id; }
     public function getConnecteur(): ?Connecteur { return $this->connecteur; }
     public function setConnecteur(Connecteur $connecteur): self { $this->connecteur = $connecteur; return $this; }
-    public function getIdentifiant(): ?string { return $this->identifiant; }
+    public function getIdentifiant(): string { return $this->identifiant; }
     public function setIdentifiant(string $identifiant): self { $this->identifiant = $identifiant; return $this; }
-    public function getType(): ?string { return $this->type; }
-    public function setType(string $type): self { $this->type = $type; return $this; }
+    public function getType(): string { return $this->type; }
+    public function setType(string $type): self {
+        if (!in_array($type, ['emission', 'reception', 'emission_reception'])) {
+            throw new \InvalidArgumentException("Type invalide : $type");
+        }
+        $this->type = $type;
+        return $this;
+    }
 }

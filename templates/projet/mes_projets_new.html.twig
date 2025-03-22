@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau projet - Oboba{% endblock %}
+
+{% block body %}
+    <h1>Créer un nouveau projet</h1>
+
+    {{ form_start(form) }}
+        {{ form_row(form.nom) }}
+        <button type="submit" class="btn btn-primary">Créer</button>
+    {{ form_end(form) }}
+
+    <a href="{{ path('projet_mes_projets') }}" class="btn btn-secondary mt-3">Retour à mes projets</a>
+{% endblock %}

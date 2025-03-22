@@ -2,6 +2,7 @@
 namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -65,4 +66,43 @@ class Utilisateur implements UserInterface
     public function getProjetUtilisateurs(): Collection { return $this->projetUtilisateurs; }
     public function addProjetUtilisateur(ProjetUtilisateur $pu): self { if (!$this->projetUtilisateurs->contains($pu)) { $this->projetUtilisateurs[] = $pu; $pu->setUtilisateur($this); } return $this; }
     public function removeProjetUtilisateur(ProjetUtilisateur $pu): self { if ($this->projetUtilisateurs->removeElement($pu)) { if ($pu->getUtilisateur() === $this) { $pu->setUtilisateur(null); } } return $this; }
+    
+    /**
+     * @return Collection|Projet[]
+     */
+     public function getProjetsProprietaire(): Collection
+     {
+	    $criteria = Criteria::create()
+		->andWhere(Criteria::expr()->eq('role', 'proprietaire'));
+
+	    return $this->projetUtilisateurs->matching($criteria)->map(function (ProjetUtilisateur $pu) {
+		return $pu->getProjet();
+	    });
+    }
+    
+    	/**
+	 * @return Collection|Projet[]
+	 */
+	public function getProjetsConcepteur(): Collection
+	{
+	    $criteria = Criteria::create()
+		->andWhere(Criteria::expr()->eq('role', 'concepteur'));
+
+	    return $this->projetUtilisateurs->matching($criteria)->map(function (ProjetUtilisateur $pu) {
+		return $pu->getProjet();
+	    });
+	}
+
+	/**
+	 * @return Collection|Projet[]
+	 */
+	public function getProjetsLecteur(): Collection
+	{
+	    $criteria = Criteria::create()
+		->andWhere(Criteria::expr()->eq('role', 'lecteur'));
+
+	    return $this->projetUtilisateurs->matching($criteria)->map(function (ProjetUtilisateur $pu) {
+		return $pu->getProjet();
+	    });
+	}
 }

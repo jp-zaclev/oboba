@@ -23,7 +23,7 @@ class ProjetUtilisateur
 
     /**
      * @ORM\ManyToOne(targetEntity="Utilisateur", inversedBy="projetUtilisateurs")
-     * @ORM\JoinColumn(name="utilisateur_id", referencedColumnName="id", nullable=false)
+     * @ORM\JoinColumn(name="utilisateur_id", referencedColumnName="id", nullable=true)
      */
     private $utilisateur;
 
@@ -54,7 +54,7 @@ class ProjetUtilisateur
         return $this->utilisateur;
     }
 
-    public function setUtilisateur(Utilisateur $utilisateur): self
+    public function setUtilisateur(?Utilisateur $utilisateur): self
     {
         $this->utilisateur = $utilisateur;
         return $this;
