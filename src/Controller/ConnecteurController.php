@@ -37,7 +37,8 @@ class ConnecteurController extends AbstractController
         $filterForm->handleRequest($request);
 
         $qb = $em->getRepository(Connecteur::class)->createQueryBuilder('c')
-            ->leftJoin('c.catalogueProjetConnecteurs', 'cat')
+            ->leftJoin('c.catalogueProjetConnecteurs', 'cat') // Jointure existante
+            ->addSelect('cat') // Ajout pour supporter le tri sur cat.*
             ->where('c.projet = :projet')
             ->setParameter('projet', $projet);
 
@@ -65,7 +66,11 @@ class ConnecteurController extends AbstractController
         $connecteurs = $paginator->paginate(
             $qb->getQuery(),
             $request->query->getInt('page', 1),
-            10
+            10,
+            [
+                'defaultSortFieldName' => 'c.nom', // Tri par défaut sur le nom
+                'defaultSortDirection' => 'asc',
+            ]
         );
 
         return $this->render('connecteur/list.html.twig', [
@@ -74,6 +79,12 @@ class ConnecteurController extends AbstractController
             'filter_form' => $filterForm->createView(),
         ]);
     }
+
+    
+    
+    
+    
+    
 
     #[Route('/projet/{projetId}/connecteurs/new', name: 'connecteur_new', methods: ['GET', 'POST'])]
     public function new(

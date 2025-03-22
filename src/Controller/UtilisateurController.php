@@ -11,20 +11,33 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Knp\Component\Pager\PaginatorInterface;
 
 class UtilisateurController extends AbstractController
 {
     #[Route('/utilisateurs/gestion', name: 'utilisateurs_gestion')]
-    public function gestion(EntityManagerInterface $em): Response
+    public function gestion(EntityManagerInterface $em, Request $request, PaginatorInterface $paginator): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
-        $utilisateurs = $em->getRepository(Utilisateur::class)->findAll();
+        $qb = $em->getRepository(Utilisateur::class)->createQueryBuilder('u');
+
+        $utilisateurs = $paginator->paginate(
+            $qb->getQuery(),
+            $request->query->getInt('page', 1),
+            10,
+            [
+                'defaultSortFieldName' => 'u.nom', // Tri par défaut sur le nom
+                'defaultSortDirection' => 'asc',
+            ]
+        );
 
         return $this->render('utilisateur/gestion.html.twig', [
             'utilisateurs' => $utilisateurs,
         ]);
     }
+
+
 
     #[Route('/utilisateurs/new', name: 'utilisateur_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher): Response

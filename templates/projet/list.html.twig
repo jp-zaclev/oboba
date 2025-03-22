@@ -6,41 +6,49 @@
     <h1>Liste des projets</h1>
     <a href="{{ path('projet_new') }}" class="btn btn-primary mb-3">Ajouter un projet</a>
 
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Nom</th>
-                <th>Date de création</th>
-                <th>Dernière modification</th>
-                <th>Propriétaire</th>
-                <th>Concepteurs</th>
-                <th>Lecteurs</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for projet in projets %}
-                <tr {% if not projet.proprietaire %}class="table-warning"{% endif %}>
-                    <td>{{ projet.nom }}</td>
-                    <td>{{ projet.dateHeureCreation|date('d/m/Y H:i') }}</td>
-                    <td>{{ projet.dateHeureDerniereModification|date('d/m/Y H:i') }}</td>
-                    <td>{{ projet.proprietaires|map(p => p.nom)|join(', ') ?: '-' }}</td>
-                    <td>{{ projet.concepteurs|map(c => c.nom)|join(', ') }}</td>
-                    <td>{{ projet.lecteurs|map(l => l.nom)|join(', ') }}</td>
-                    <td>
-                        <a href="{{ path('projet_edit', {'id': projet.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
-                        <form method="post" action="{{ path('projet_delete', {'id': projet.id}) }}" style="display:inline;" onsubmit="return confirm('Confirmer la suppression ?');">
-                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ projet.id) }}">
-                            <button class="btn btn-sm btn-danger">Supprimer</button>
-                        </form>
-                        {% if is_granted('ROLE_ADMIN') %}
-                            <a href="{{ path('projet_assigner_proprietaire', {'id': projet.id}) }}" class="btn btn-sm btn-info mt-1">Assigner un propriétaire</a>
-                        {% endif %}
-                    </td>
+    {% if projets is empty %}
+        <p>Aucun projet trouvé.</p>
+    {% else %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>{{ knp_pagination_sortable(projets, 'Nom', 'p.nom') }}</th>
+                    <th>{{ knp_pagination_sortable(projets, 'Date de création', 'p.dateHeureCreation') }}</th>
+                    <th>{{ knp_pagination_sortable(projets, 'Dernière modification', 'p.dateHeureDerniereModification') }}</th>
+                    <th>Propriétaire</th> {# Tri complexe, voir note ci-dessous #}
+                    <th>Concepteurs</th> {# Tri complexe, voir note ci-dessous #}
+                    <th>Lecteurs</th> {# Tri complexe, voir note ci-dessous #}
+                    <th>Actions</th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                {% for projet in projets %}
+                    <tr {% if not projet.proprietaire %}class="table-warning"{% endif %}>
+                        <td>{{ projet.nom }}</td>
+                        <td>{{ projet.dateHeureCreation|date('d/m/Y H:i') }}</td>
+                        <td>{{ projet.dateHeureDerniereModification|date('d/m/Y H:i') }}</td>
+                        <td>{{ projet.proprietaires|map(p => p.nom)|join(', ') ?: '-' }}</td>
+                        <td>{{ projet.concepteurs|map(c => c.nom)|join(', ') }}</td>
+                        <td>{{ projet.lecteurs|map(l => l.nom)|join(', ') }}</td>
+                        <td>
+                            <a href="{{ path('projet_edit', {'id': projet.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                            <form method="post" action="{{ path('projet_delete', {'id': projet.id}) }}" style="display:inline;" onsubmit="return confirm('Confirmer la suppression ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ projet.id) }}">
+                                <button class="btn btn-sm btn-danger">Supprimer</button>
+                            </form>
+                            {% if is_granted('ROLE_ADMIN') %}
+                                <a href="{{ path('projet_assigner_proprietaire', {'id': projet.id}) }}" class="btn btn-sm btn-info mt-1">Assigner un propriétaire</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="navigation">
+            {{ knp_pagination_render(projets) }}
+        </div>
+    {% endif %}
 
     {% for message in app.flashes('success') %}
         <div class="alert alert-success mt-3">{{ message }}</div>

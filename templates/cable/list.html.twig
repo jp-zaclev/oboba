@@ -37,9 +37,9 @@
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Nom</th>
-                    <th>Longueur</th>
-                    <th>Catalogue</th>
+                    <th>{{ knp_pagination_sortable(cables, 'Nom', 'c.nom') }}</th>
+                    <th>{{ knp_pagination_sortable(cables, 'Longueur', 'c.longueur') }}</th>
+                    <th>{{ knp_pagination_sortable(cables, 'Catalogue', 'cat.nom') }}</th> {# Jointure nécessaire pour trier sur catalogueProjetCables.nom #}
                     <th>Actions</th>
                 </tr>
             </thead>

@@ -4,38 +4,57 @@
 
 {% block body %}
     <h1>Gestion des utilisateurs</h1>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Nom</th>
-                <th>Email</th>
-                <th>Rôle</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for utilisateur in utilisateurs %}
+
+    <div class="mb-3">
+        <a href="{{ path('utilisateur_new') }}" class="btn btn-success">Ajouter un utilisateur</a>
+    </div>
+
+    {% if utilisateurs is empty %}
+        <p>Aucun utilisateur trouvé.</p>
+    {% else %}
+        <table class="table table-striped">
+            <thead>
                 <tr>
-                    <td>{{ utilisateur.nom }}</td>
-                    <td>{{ utilisateur.email }}</td>
-                    <td>
-                        {% if 'ROLE_ADMIN' in utilisateur.roles %}
-                            Administrateur
-                        {% else %}
-                            Utilisateur
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="{{ path('utilisateur_show', {'id': utilisateur.id}) }}" class="btn btn-sm btn-info">Voir</a>
-                        <a href="{{ path('utilisateur_edit', {'id': utilisateur.id}) }}" class="btn btn-sm btn-primary">Modifier</a>
-                        <form method="post" action="{{ path('utilisateur_supprimer', {'id': utilisateur.id}) }}" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer cet utilisateur ?');">
-                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ utilisateur.id) }}">
-                            <button class="btn btn-sm btn-danger">Supprimer</button>
-                        </form>
-                    </td>
+                    <th>{{ knp_pagination_sortable(utilisateurs, 'Nom', 'u.nom') }}</th>
+                    <th>{{ knp_pagination_sortable(utilisateurs, 'Email', 'u.email') }}</th>
+                    <th>{{ knp_pagination_sortable(utilisateurs, 'Rôle', 'u.roles') }}</th>
+                    <th>Actions</th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <a href="{{ path('utilisateur_new') }}" class="btn btn-success">Ajouter un utilisateur</a>
+            </thead>
+            <tbody>
+                {% for utilisateur in utilisateurs %}
+                    <tr>
+                        <td>{{ utilisateur.nom }}</td>
+                        <td>{{ utilisateur.email }}</td>
+                        <td>
+                            {% if 'ROLE_ADMIN' in utilisateur.roles %}
+                                Administrateur
+                            {% else %}
+                                Utilisateur
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ path('utilisateur_show', {'id': utilisateur.id}) }}" class="btn btn-sm btn-info">Voir</a>
+                            <a href="{{ path('utilisateur_edit', {'id': utilisateur.id}) }}" class="btn btn-sm btn-primary">Modifier</a>
+                            <form method="post" action="{{ path('utilisateur_supprimer', {'id': utilisateur.id}) }}" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer cet utilisateur ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ utilisateur.id) }}">
+                                <button class="btn btn-sm btn-danger">Supprimer</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="navigation">
+            {{ knp_pagination_render(utilisateurs) }}
+        </div>
+    {% endif %}
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success mt-3">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('danger') %}
+        <div class="alert alert-danger mt-3">{{ message }}</div>
+    {% endfor %}
 {% endblock %}

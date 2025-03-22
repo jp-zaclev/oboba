@@ -13,7 +13,7 @@
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Nom</th>
+                    <th>{{ knp_pagination_sortable(projets, 'Nom', 'p.nom') }}</th>
                     <th>Rôle</th>
                     <th>Actions</th>
                 </tr>
@@ -43,5 +43,13 @@
                 {% endfor %}
             </tbody>
         </table>
+
+        <div class="navigation">
+            {{ knp_pagination_render(projets) }}
+        </div>
     {% endif %}
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success mt-3">{{ message }}</div>
+    {% endfor %}
 {% endblock %}

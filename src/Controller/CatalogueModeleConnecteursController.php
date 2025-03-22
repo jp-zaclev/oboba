@@ -26,7 +26,7 @@ class CatalogueModeleConnecteursController extends AbstractController
         $this->repository = $repository;
     }
 
-    /**
+   /**
      * @Route("/", name="catalogue_modele_connecteurs_list", methods={"GET"})
      */
     public function list(Request $request, PaginatorInterface $paginator): Response
@@ -61,7 +61,11 @@ class CatalogueModeleConnecteursController extends AbstractController
         $connecteurs = $paginator->paginate(
             $qb->getQuery(),
             $request->query->getInt('page', 1),
-            10
+            10,
+            [
+                'defaultSortFieldName' => 'c.nom',
+                'defaultSortDirection' => 'asc',
+            ]
         );
 
         return $this->render('catalogue_modele_connecteurs/list.html.twig', [

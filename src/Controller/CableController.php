@@ -37,6 +37,8 @@ class CableController extends AbstractController
         $filterForm->handleRequest($request);
 
         $qb = $em->getRepository(Cable::class)->createQueryBuilder('c')
+            ->leftJoin('c.catalogueProjetCables', 'cat') // Jointure pour catalogueProjetCables
+            ->addSelect('cat') // Ajout de la jointure dans la sélection pour le tri
             ->where('c.projet = :projet')
             ->setParameter('projet', $projet);
 
@@ -64,7 +66,11 @@ class CableController extends AbstractController
         $cables = $paginator->paginate(
             $qb->getQuery(),
             $request->query->getInt('page', 1),
-            10
+            10,
+            [
+                'defaultSortFieldName' => 'c.nom', // Tri par défaut sur le nom
+                'defaultSortDirection' => 'asc',
+            ]
         );
 
         return $this->render('cable/list.html.twig', [
@@ -73,6 +79,9 @@ class CableController extends AbstractController
             'filter_form' => $filterForm->createView(),
         ]);
     }
+
+
+
 
     #[Route('/projet/{projetId}/cables/export', name: 'cable_export_csv', methods: ['GET'])]
     public function exportCsv(

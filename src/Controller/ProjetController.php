@@ -15,20 +15,33 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Knp\Component\Pager\PaginatorInterface;
 
 #[Route('/projets')]
 class ProjetController extends AbstractController
 {
     #[Route('', name: 'projet_list', methods: ['GET'])]
-    public function list(EntityManagerInterface $em): Response
+    public function list(EntityManagerInterface $em, Request $request, PaginatorInterface $paginator): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
-        $projets = $em->getRepository(Projet::class)->findAll();
+
+        $qb = $em->getRepository(Projet::class)->createQueryBuilder('p');
+
+        $projets = $paginator->paginate(
+            $qb->getQuery(),
+            $request->query->getInt('page', 1),
+            10,
+            [
+                'defaultSortFieldName' => 'p.nom', // Tri par défaut sur le nom
+                'defaultSortDirection' => 'asc',
+            ]
+        );
 
         return $this->render('projet/list.html.twig', [
             'projets' => $projets,
         ]);
     }
+
 
 	#[Route('/new', name: 'projet_new', methods: ['GET', 'POST'])]
 	#[IsGranted('ROLE_ADMIN')]
@@ -151,14 +164,28 @@ class ProjetController extends AbstractController
     }
     
     #[Route('/mes-projets', name: 'projet_mes_projets', methods: ['GET'])]
-    public function mesProjets(EntityManagerInterface $em): Response
+    public function mesProjets(EntityManagerInterface $em, Request $request, PaginatorInterface $paginator): Response
     {
         $utilisateur = $this->getUser();
         if (!$utilisateur) {
             return $this->redirectToRoute('login');
         }
 
-        $projets = $em->getRepository(Projet::class)->findByUtilisateur($utilisateur);
+        $qb = $em->getRepository(Projet::class)->createQueryBuilder('p')
+            ->innerJoin('p.projetUtilisateurs', 'pu') // Jointure avec ProjetUtilisateur
+            ->where('pu.utilisateur = :utilisateur')
+            ->setParameter('utilisateur', $utilisateur)
+            ->addSelect('pu'); // Inclure les données de la jointure
+
+        $projets = $paginator->paginate(
+            $qb->getQuery(),
+            $request->query->getInt('page', 1),
+            10,
+            [
+                'defaultSortFieldName' => 'p.nom', // Tri par défaut sur le nom
+                'defaultSortDirection' => 'asc',
+            ]
+        );
 
         return $this->render('projet/mes_projets.html.twig', [
             'projets' => $projets,

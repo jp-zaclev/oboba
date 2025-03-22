@@ -36,39 +36,38 @@ class CatalogueModeleCablesController extends AbstractController
 
         $qb = $this->repository->createQueryBuilder('c');
 
+        // Gestion des filtres
         if ($filterForm->isSubmitted() && $filterForm->isValid()) {
             $data = $filterForm->getData();
-
             if ($data['nom']) {
-                $qb->andWhere('c.nom LIKE :nom')
-                   ->setParameter('nom', '%' . $data['nom'] . '%');
+                $qb->andWhere('c.nom LIKE :nom')->setParameter('nom', '%' . $data['nom'] . '%');
             }
             if ($data['type']) {
-                $qb->andWhere('c.type LIKE :type')
-                   ->setParameter('type', '%' . $data['type'] . '%');
+                $qb->andWhere('c.type LIKE :type')->setParameter('type', '%' . $data['type'] . '%');
             }
             if ($data['nombreConducteursMaxMin']) {
-                $qb->andWhere('c.nombreConducteursMax >= :conducteursMin')
-                   ->setParameter('conducteursMin', $data['nombreConducteursMaxMin']);
+                $qb->andWhere('c.nombreConducteursMax >= :conducteursMin')->setParameter('conducteursMin', $data['nombreConducteursMaxMin']);
             }
             if ($data['nombreConducteursMaxMax']) {
-                $qb->andWhere('c.nombreConducteursMax <= :conducteursMax')
-                   ->setParameter('conducteursMax', $data['nombreConducteursMaxMax']);
+                $qb->andWhere('c.nombreConducteursMax <= :conducteursMax')->setParameter('conducteursMax', $data['nombreConducteursMaxMax']);
             }
             if ($data['prixMetreMin']) {
-                $qb->andWhere('c.prixMetre >= :prixMin')
-                   ->setParameter('prixMin', $data['prixMetreMin']);
+                $qb->andWhere('c.prixMetre >= :prixMin')->setParameter('prixMin', $data['prixMetreMin']);
             }
             if ($data['prixMetreMax']) {
-                $qb->andWhere('c.prixMetre <= :prixMax')
-                   ->setParameter('prixMax', $data['prixMetreMax']);
+                $qb->andWhere('c.prixMetre <= :prixMax')->setParameter('prixMax', $data['prixMetreMax']);
             }
         }
 
+        // Pagination sans tri manuel
         $catalogues = $paginator->paginate(
             $qb->getQuery(),
             $request->query->getInt('page', 1),
-            10 // 10 éléments par page
+            10,
+            [
+                'defaultSortFieldName' => 'c.nom', // Tri par défaut
+                'defaultSortDirection' => 'asc',
+            ]
         );
 
         return $this->render('catalogue_modele_cables/list.html.twig', [
@@ -76,7 +75,10 @@ class CatalogueModeleCablesController extends AbstractController
             'filter_form' => $filterForm->createView(),
         ]);
     }
-    
+
+
+
+        
     /**
      * Ajoute un nouveau modèle de câble
      * @Route("/new", name="catalogue_modele_cables_new", methods={"GET", "POST"})

@@ -37,11 +37,10 @@
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Nom</th>
-                    <th>Catalogue Projet</th>
-                    <th>Nombre de Contacts</th>
-                    <th>Type</th>
-                    <th>Prix Unitaire</th>
+                    <th>{{ knp_pagination_sortable(connecteurs, 'Nom', 'c.nom') }}</th>
+                    <th>{{ knp_pagination_sortable(connecteurs, 'Catalogue', 'cat.nom') }}</th>
+                    <th>{{ knp_pagination_sortable(connecteurs, 'Nombre de contacts', 'cat.nombreContacts') }}</th>
+                    <th>{{ knp_pagination_sortable(connecteurs, 'Type', 'cat.type') }}</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -52,7 +51,6 @@
                         <td>{{ connecteur.catalogueProjetConnecteurs ? connecteur.catalogueProjetConnecteurs.nom : 'N/A' }}</td>
                         <td>{{ connecteur.catalogueProjetConnecteurs ? connecteur.catalogueProjetConnecteurs.nombreContacts : 'N/A' }}</td>
                         <td>{{ connecteur.catalogueProjetConnecteurs ? connecteur.catalogueProjetConnecteurs.type : 'N/A' }}</td>
-                        <td>{{ connecteur.catalogueProjetConnecteurs ? connecteur.catalogueProjetConnecteurs.prixUnitaire : 'N/A' }}</td>
                         <td>
                             {% if is_granted('CAN_EDIT_CONNECTEURS', projet) %}
                                 <a href="{{ path('connecteur_edit', {'projetId': projet.id, 'id': connecteur.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
@@ -74,5 +72,8 @@
 
     {% for message in app.flashes('success') %}
         <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger">{{ message }}</div>
     {% endfor %}
 {% endblock %}

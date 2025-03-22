@@ -34,10 +34,10 @@
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Nom</th>
-                    <th>Type</th>
-                    <th>Nombre max de conducteurs</th>
-                    <th>Prix au mètre</th>
+                    <th>{{ knp_pagination_sortable(catalogues, 'Nom', 'c.nom') }}</th>
+                    <th>{{ knp_pagination_sortable(catalogues, 'Type', 'c.type') }}</th>
+                    <th>{{ knp_pagination_sortable(catalogues, 'Nombre max de conducteurs', 'c.nombreConducteursMax') }}</th>
+                    <th>{{ knp_pagination_sortable(catalogues, 'Prix au mètre', 'c.prixMetre') }}</th>
                     <th>Actions</th>
                 </tr>
             </thead>

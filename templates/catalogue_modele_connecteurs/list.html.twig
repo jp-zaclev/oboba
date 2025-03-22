@@ -34,10 +34,10 @@
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Nom</th>
-                    <th>Type</th>
-                    <th>Nombre de contacts</th>
-                    <th>Prix unitaire</th>
+                    <th>{{ knp_pagination_sortable(connecteurs, 'Nom', 'c.nom') }}</th>
+                    <th>{{ knp_pagination_sortable(connecteurs, 'Type', 'c.type') }}</th>
+                    <th>{{ knp_pagination_sortable(connecteurs, 'Nombre de contacts', 'c.nombreContacts') }}</th>
+                    <th>{{ knp_pagination_sortable(connecteurs, 'Prix unitaire', 'c.prixUnitaire') }}</th>
                     <th>Actions</th>
                 </tr>
             </thead>

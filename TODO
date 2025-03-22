@@ -1,0 +1,10 @@
+- faire le CRUD pour CatalogueModeleBorniers
+- Dans mes projets, ajouter l'accès à la gestion CRUD des catalogues projet
+- Ajouter les export CSV dans les catalogues modèles
+- Ajouter un import CSV dans les catalogues modèles
+
+
+- Une création d'un projet implique l'import des catalogues modèles dans les catalogues projet.
+- La destruction d'un projet implique l'effacement des catalogues projet.
+
+
