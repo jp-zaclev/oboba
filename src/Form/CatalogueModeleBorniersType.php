@@ -1,8 +1,7 @@
 <?php
-// src/Form/CatalogueModeleCablesType.php
 namespace App\Form;
 
-use App\Entity\CatalogueModeleCables;
+use App\Entity\CatalogueModeleBorniers;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
@@ -10,46 +9,50 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Positive;
 use Symfony\Component\Validator\Constraints\PositiveOrZero;
 
-class CatalogueModeleCablesType extends AbstractType
+class CatalogueModeleBorniersType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
             ->add('nom', TextType::class, [
                 'label' => 'Nom du modèle',
-                'constraints' => [new NotBlank(['message' => 'Le nom est requis'])],
-                'attr' => ['placeholder' => 'Ex: Câble coaxial RG58'],
-            ])
-            ->add('type', TextType::class, [
-                'label' => 'Type',
-                'constraints' => [new NotBlank(['message' => 'Le type est requis'])],
-                'attr' => ['placeholder' => 'Ex: coaxial'],
-            ])
-            ->add('nombreConducteursMax', IntegerType::class, [
-                'label' => 'Nombre maximal de conducteurs',
                 'constraints' => [
-                    new NotBlank(['message' => 'Le nombre de conducteurs est requis']),
-                    new PositiveOrZero(['message' => 'Le nombre doit être positif ou zéro']),
+                    new NotBlank(['message' => 'Le nom est requis']),
                 ],
-                'attr' => ['min' => 0],
+                'attr' => ['placeholder' => 'Ex: Bornier à vis 4P'],
+            ])
+            ->add('nombreBornes', IntegerType::class, [
+                'label' => 'Nombre de bornes',
+                'constraints' => [
+                    new NotBlank(['message' => 'Le nombre de bornes est requis']),
+                    new Positive(['message' => 'Le nombre doit être positif']),
+                ],
+                'attr' => ['min' => 1],
+            ])
+            ->add('caracteristiques', TextType::class, [
+                'label' => 'Caractéristiques',
+                'required' => false,
+                'constraints' => [], // Pas de contrainte car nullable
+                'attr' => ['placeholder' => 'Ex: 2.5mm² max'],
             ])
             ->add('prixUnitaire', NumberType::class, [
-                'label' => 'Prix au mètre',
+                'label' => 'Prix unitaire',
                 'scale' => 2,
                 'constraints' => [
                     new NotBlank(['message' => 'Le prix est requis']),
                     new PositiveOrZero(['message' => 'Le prix doit être positif ou zéro']),
                 ],
-                'attr' => ['step' => '0.01', 'placeholder' => 'Ex: 2.50'],
+                'attr' => ['step' => '0.01', 'placeholder' => 'Ex: 1.20'],
             ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
-            'data_class' => CatalogueModeleCables::class,
+            'data_class' => CatalogueModeleBorniers::class,
         ]);
     }
 }

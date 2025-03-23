@@ -27,12 +27,13 @@ security:
     role_hierarchy:
         ROLE_ADMIN: [ROLE_USER] # ROLE_ADMIN inclut ROLE_USER
     access_control:
-    - { path: ^/login, roles: PUBLIC_ACCESS }
-    - { path: ^/logout, roles: PUBLIC_ACCESS }
-    - { path: ^/$, roles: PUBLIC_ACCESS }
-    - { path: ^/projets/mes-projets, roles: IS_AUTHENTICATED_FULLY }
-    - { path: ^/projet/.*/cables, roles: IS_AUTHENTICATED_FULLY }
-    - { path: ^/projets/\d+/recrutement, roles: IS_AUTHENTICATED_FULLY }
-    - { path: ^/projets, roles: ROLE_ADMIN }
-    - { path: ^/utilisateurs, roles: ROLE_ADMIN }
-    - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/logout, roles: PUBLIC_ACCESS }
+        - { path: ^/$, roles: PUBLIC_ACCESS }
+        - { path: ^/projets/mes-projets, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/projet/.*/cables, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/projets/\d+/recrutement, roles: IS_AUTHENTICATED_FULLY }
+        # - { path: ^/projets, roles: ROLE_ADMIN }  # Commentée pour laisser le controller gérer
+        - { path: ^/utilisateurs, roles: ROLE_ADMIN }
+        - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
+        

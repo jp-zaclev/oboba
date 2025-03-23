@@ -1,0 +1,65 @@
+{# templates/projet/show.html.twig (ou le nom de votre template) #}
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ projet.nom }} - Oboba{% endblock %}
+
+{% block body %}
+    <div class="her²o-section">
+        <div class="background-gradient">
+            <div class="gradient-top"></div>
+            <div class="gradient-bottom"></div>
+        </div>
+        <div class="content">
+            <div class="container mt-4">
+                <h1>{{ projet.nom }}</h1>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Détails du projet</h5>
+                        <p><strong>Nom :</strong> {{ projet.nom }}</p>
+                        <p><strong>Date de création :</strong> {{ projet.dateHeureCreation|date('d/m/Y H:i') }}</p>
+                        <p><strong>Dernière modification :</strong> {{ projet.dateHeureDerniereModification|date('d/m/Y H:i') }}</p>
+                        <p><strong>Votre rôle :</strong> 
+                            {% for pu in projet.projetUtilisateurs|filter(pu => pu.utilisateur == app.user) %}
+                                {{ pu.role|capitalize }}
+                            {% endfor %}
+                        </p>
+                    </div>
+                </div>
+
+                <h2>Actions disponibles</h2>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <button class="btn btn-primary w-100 mb-2" disabled title="Fonctionnalité à venir">Liste des signaux</button>
+                        <a href="{{ path('cable_list', {'projetId': projet.id}) }}" class="btn btn-primary w-100 mb-2">Liste des câbles</a>
+                        <a href="{{ path('connecteur_list', {'projetId': projet.id}) }}" class="btn btn-primary w-100 mb-2">Liste des connecteurs</a>
+                        <button class="btn btn-primary w-100 mb-2" disabled>Liste des borniers</button>
+                    </div>
+                    <div class="col-md-6">
+                        <button class="btn btn-primary w-100 mb-2" disabled>Catalogue des câbles</button>
+                        <button class="btn btn-primary w-100 mb-2" disabled>Catalogue des connecteurs</button>
+                        <button class="btn btn-primary w-100 mb-2" disabled>Catalogue des borniers</button>
+                    </div>
+                </div>
+
+                <h3>Fonctionnalités avancées</h3>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <button class="btn btn-secondary w-100 mb-2" disabled>Propagation des signaux</button>
+                        <button class="btn btn-secondary w-100 mb-2" disabled>Exporter le projet</button>
+                    </div>
+                    <div class="col-md-6">
+                        <button class="btn btn-secondary w-100 mb-2" disabled>Importer un projet</button>
+                        <button class="btn btn-secondary w-100 mb-2" disabled>Produire des rapports</button>
+                    </div>
+                </div>
+
+                <a href="{{ path('projet_mes_projets') }}" class="btn btn-outline-secondary">Retour à mes projets</a>
+
+                {% for message in app.flashes('success') %}
+                    <div class="alert alert-success mt-3">{{ message }}</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

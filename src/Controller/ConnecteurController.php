@@ -12,10 +12,9 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Form\FormFactoryInterface;
-use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Knp\Component\Pager\PaginatorInterface;
 
-class ConnecteurController extends AbstractController
+class ConnecteurController extends BaseController
 {
     #[Route('/projet/{projetId}/connecteurs', name: 'connecteur_list', methods: ['GET'])]
     public function list(
@@ -31,14 +30,14 @@ class ConnecteurController extends AbstractController
             throw $this->createNotFoundException('Projet non trouvé');
         }
 
-        $this->denyAccessUnlessGranted('CAN_EDIT_CONNECTEURS', $projet);
+        $this->checkProjectAccess($projet, $em);
 
         $filterForm = $formFactory->create(ConnecteurFilterType::class, null, ['projet_id' => $projetId]);
         $filterForm->handleRequest($request);
 
         $qb = $em->getRepository(Connecteur::class)->createQueryBuilder('c')
-            ->leftJoin('c.catalogueProjetConnecteurs', 'cat') // Jointure existante
-            ->addSelect('cat') // Ajout pour supporter le tri sur cat.*
+            ->leftJoin('c.catalogueProjetConnecteurs', 'cat')
+            ->addSelect('cat')
             ->where('c.projet = :projet')
             ->setParameter('projet', $projet);
 
@@ -68,7 +67,7 @@ class ConnecteurController extends AbstractController
             $request->query->getInt('page', 1),
             10,
             [
-                'defaultSortFieldName' => 'c.nom', // Tri par défaut sur le nom
+                'defaultSortFieldName' => 'c.nom',
                 'defaultSortDirection' => 'asc',
             ]
         );
@@ -79,12 +78,6 @@ class ConnecteurController extends AbstractController
             'filter_form' => $filterForm->createView(),
         ]);
     }
-
-    
-    
-    
-    
-    
 
     #[Route('/projet/{projetId}/connecteurs/new', name: 'connecteur_new', methods: ['GET', 'POST'])]
     public function new(
@@ -99,7 +92,7 @@ class ConnecteurController extends AbstractController
             throw $this->createNotFoundException('Projet non trouvé');
         }
 
-        $this->denyAccessUnlessGranted('CAN_EDIT_CONNECTEURS', $projet);
+        $this->checkProjectAccess($projet, $em);
 
         $connecteur = new Connecteur();
         $connecteur->setProjet($projet);
@@ -132,7 +125,7 @@ class ConnecteurController extends AbstractController
             throw $this->createNotFoundException('Projet non trouvé');
         }
 
-        $this->denyAccessUnlessGranted('CAN_EDIT_CONNECTEURS', $projet);
+        $this->checkProjectAccess($projet, $em);
 
         $filterForm = $formFactory->create(ConnecteurFilterType::class, null, ['projet_id' => $projetId]);
         $filterForm->handleRequest($request);
@@ -209,7 +202,7 @@ class ConnecteurController extends AbstractController
             throw $this->createNotFoundException('Connecteur non trouvé pour ce projet');
         }
 
-        $this->denyAccessUnlessGranted('CAN_EDIT_CONNECTEURS', $projet);
+        $this->checkProjectAccess($projet, $em);
 
         $form = $formFactory->create(ConnecteurType::class, $connecteur, ['projet_id' => $projetId]);
         $form->handleRequest($request);
@@ -244,7 +237,7 @@ class ConnecteurController extends AbstractController
             throw $this->createNotFoundException('Connecteur non trouvé pour ce projet');
         }
 
-        $this->denyAccessUnlessGranted('CAN_EDIT_CONNECTEURS', $projet);
+        $this->checkProjectAccess($projet, $em);
 
         if ($this->isCsrfTokenValid('delete_' . $connecteur->getId(), $request->request->get('_token'))) {
             $em->remove($connecteur);

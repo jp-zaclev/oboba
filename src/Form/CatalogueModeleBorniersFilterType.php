@@ -1,5 +1,4 @@
 <?php
-// src/Form/CatalogueModeleCablesFilterType.php
 namespace App\Form;
 
 use Symfony\Component\Form\AbstractType;
@@ -8,7 +7,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-class CatalogueModeleCablesFilterType extends AbstractType
+class CatalogueModeleBorniersFilterType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
@@ -18,20 +17,20 @@ class CatalogueModeleCablesFilterType extends AbstractType
                 'required' => false,
                 'attr' => ['placeholder' => 'Filtrer par nom'],
             ])
-            ->add('type', TextType::class, [
-                'label' => 'Type',
-                'required' => false,
-                'attr' => ['placeholder' => 'Filtrer par type'],
-            ])
-            ->add('nombreConducteursMaxMin', NumberType::class, [
-                'label' => 'Conducteurs min',
+            ->add('nombreBornesMin', NumberType::class, [
+                'label' => 'Bornes min',
                 'required' => false,
                 'attr' => ['placeholder' => 'Min'],
             ])
-            ->add('nombreConducteursMaxMax', NumberType::class, [
-                'label' => 'Conducteurs max',
+            ->add('nombreBornesMax', NumberType::class, [
+                'label' => 'Bornes max',
                 'required' => false,
                 'attr' => ['placeholder' => 'Max'],
+            ])
+            ->add('caracteristiques', TextType::class, [
+                'label' => 'Caractéristiques',
+                'required' => false,
+                'attr' => ['placeholder' => 'Filtrer par caractéristiques'],
             ])
             ->add('prixUnitaireMin', NumberType::class, [
                 'label' => 'Prix min',
@@ -48,9 +47,9 @@ class CatalogueModeleCablesFilterType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
-            'data_class' => null, // Pas d'entité liée, juste des données de filtre
-            'method' => 'GET',    // Utilise GET pour conserver les filtres dans l'URL
-            'csrf_protection' => false, // Pas besoin de CSRF pour un filtre GET
+            'data_class' => null,
+            'method' => 'GET',
+            'csrf_protection' => false,
         ]);
     }
 }

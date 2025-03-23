@@ -38,8 +38,8 @@ class CableFilterType extends AbstractType
                 'placeholder' => 'Tous les catalogues',
                 'query_builder' => function (\Doctrine\ORM\EntityRepository $er) use ($options) {
                     return $er->createQueryBuilder('c')
-                        ->where('c.idProjet = :projetId')
-                        ->setParameter('projetId', $options['projet_id']);
+                        ->where('c.projet = :projet')  // Corrigé : 'projet' au lieu de 'idProjet'
+                        ->setParameter('projet', $options['projet_id']);
                 },
             ]);
     }

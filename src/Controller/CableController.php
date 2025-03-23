@@ -15,140 +15,138 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Form\FormFactoryInterface;
 use Knp\Component\Pager\PaginatorInterface;
 
-class CableController extends AbstractController
+class CableController extends BaseController
 {
-    #[Route('/projet/{projetId}/cables', name: 'cable_list', methods: ['GET'])]
-    public function list(
-        int $projetId,
-        ProjetRepository $projetRepository,
-        Request $request,
-        EntityManagerInterface $em,
-        FormFactoryInterface $formFactory,
-        PaginatorInterface $paginator
-    ): Response {
-        $projet = $projetRepository->find($projetId);
-        if (!$projet) {
-            throw $this->createNotFoundException('Projet non trouvé');
-        }
+	#[Route('/projet/{projetId}/cables', name: 'cable_list', methods: ['GET'])]
+	public function list(
+	    int $projetId,
+	    ProjetRepository $projetRepository,
+	    Request $request,
+	    EntityManagerInterface $em,
+	    FormFactoryInterface $formFactory,
+	    PaginatorInterface $paginator
+	): Response {
+	    $projet = $projetRepository->find($projetId);
+	    if (!$projet) {
+		throw $this->createNotFoundException('Projet non trouvé');
+	    }
 
-        $this->denyAccessUnlessGranted('CAN_EDIT_CABLES', $projet);
+	    $this->checkProjectAccess($projet, $em);
 
-        $filterForm = $formFactory->create(CableFilterType::class, null, ['projet_id' => $projet->getId()]);
-        $filterForm->handleRequest($request);
+	    $filterForm = $formFactory->create(CableFilterType::class, null, ['projet_id' => $projet->getId()]);
+	    $filterForm->handleRequest($request);
 
-        $qb = $em->getRepository(Cable::class)->createQueryBuilder('c')
-            ->leftJoin('c.catalogueProjetCables', 'cat') // Jointure pour catalogueProjetCables
-            ->addSelect('cat') // Ajout de la jointure dans la sélection pour le tri
-            ->where('c.projet = :projet')
-            ->setParameter('projet', $projet);
+	    $qb = $em->getRepository(Cable::class)->createQueryBuilder('c')
+		->leftJoin('c.catalogueProjetCables', 'cat')
+		->addSelect('cat')
+		->where('c.projet = :projet')
+		->setParameter('projet', $projet);
 
-        if ($filterForm->isSubmitted() && $filterForm->isValid()) {
-            $data = $filterForm->getData();
+	    if ($filterForm->isSubmitted() && $filterForm->isValid()) {
+		$data = $filterForm->getData();
 
-            if ($data['nom']) {
-                $qb->andWhere('c.nom LIKE :nom')
-                   ->setParameter('nom', '%' . $data['nom'] . '%');
-            }
-            if ($data['longueurMin'] !== null) {
-                $qb->andWhere('c.longueur >= :longueurMin')
-                   ->setParameter('longueurMin', $data['longueurMin']);
-            }
-            if ($data['longueurMax'] !== null) {
-                $qb->andWhere('c.longueur <= :longueurMax')
-                   ->setParameter('longueurMax', $data['longueurMax']);
-            }
-            if ($data['catalogueProjetCables']) {
-                $qb->andWhere('c.catalogueProjetCables = :catalogue')
-                   ->setParameter('catalogue', $data['catalogueProjetCables']);
-            }
-        }
+		if ($data['nom']) {
+		    $qb->andWhere('c.nom LIKE :nom')
+		       ->setParameter('nom', '%' . $data['nom'] . '%');
+		}
+		if ($data['longueurMin'] !== null) {
+		    $qb->andWhere('c.longueur >= :longueurMin')
+		       ->setParameter('longueurMin', $data['longueurMin']);
+		}
+		if ($data['longueurMax'] !== null) {
+		    $qb->andWhere('c.longueur <= :longueurMax')
+		       ->setParameter('longueurMax', $data['longueurMax']);
+		}
+		if ($data['catalogueProjetCables']) {
+		    $qb->andWhere('c.catalogueProjetCables = :catalogue')
+		       ->setParameter('catalogue', $data['catalogueProjetCables']);
+		}
+	    }
 
-        $cables = $paginator->paginate(
-            $qb->getQuery(),
-            $request->query->getInt('page', 1),
-            10,
-            [
-                'defaultSortFieldName' => 'c.nom', // Tri par défaut sur le nom
-                'defaultSortDirection' => 'asc',
-            ]
-        );
+	    $cables = $paginator->paginate(
+		$qb->getQuery(),
+		$request->query->getInt('page', 1),
+		10,
+		[
+		    'defaultSortFieldName' => 'c.nom',
+		    'defaultSortDirection' => 'asc',
+		]
+	    );
 
-        return $this->render('cable/list.html.twig', [
-            'projet' => $projet,
-            'cables' => $cables,
-            'filter_form' => $filterForm->createView(),
-        ]);
-    }
+	    return $this->render('cable/list.html.twig', [
+		'projet' => $projet,
+		'cables' => $cables,
+		'filter_form' => $filterForm->createView(),
+	    ]);
+	}
+	
+	
+	#[Route('/projet/{projetId}/cables/export', name: 'cable_export_csv', methods: ['GET'])]
+	public function exportCsv(
+	    int $projetId,
+	    ProjetRepository $projetRepository,
+	    Request $request,
+	    EntityManagerInterface $em,
+	    FormFactoryInterface $formFactory
+	): Response {
+	    $projet = $projetRepository->find($projetId);
+	    if (!$projet) {
+		throw $this->createNotFoundException('Projet non trouvé');
+	    }
 
+	    $this->checkProjectAccess($projet, $em);
 
+	    $filterForm = $formFactory->create(CableFilterType::class, null, ['projet_id' => $projet->getId()]);
+	    $filterForm->handleRequest($request);
 
+	    $qb = $em->getRepository(Cable::class)->createQueryBuilder('c')
+		->where('c.projet = :projet')
+		->setParameter('projet', $projet);
 
-    #[Route('/projet/{projetId}/cables/export', name: 'cable_export_csv', methods: ['GET'])]
-    public function exportCsv(
-        int $projetId,
-        ProjetRepository $projetRepository,
-        Request $request,
-        EntityManagerInterface $em,
-        FormFactoryInterface $formFactory
-    ): Response {
-        $projet = $projetRepository->find($projetId);
-        if (!$projet) {
-            throw $this->createNotFoundException('Projet non trouvé');
-        }
+	    if ($filterForm->isSubmitted() && $filterForm->isValid()) {
+		$data = $filterForm->getData();
 
-        $this->denyAccessUnlessGranted('CAN_EDIT_CABLES', $projet);
+		if ($data['nom']) {
+		    $qb->andWhere('c.nom LIKE :nom')
+		       ->setParameter('nom', '%' . $data['nom'] . '%');
+		}
+		if ($data['longueurMin'] !== null) {
+		    $qb->andWhere('c.longueur >= :longueurMin')
+		       ->setParameter('longueurMin', $data['longueurMin']);
+		}
+		if ($data['longueurMax'] !== null) {
+		    $qb->andWhere('c.longueur <= :longueurMax')
+		       ->setParameter('longueurMax', $data['longueurMax']);
+		}
+		if ($data['catalogueProjetCables']) {
+		    $qb->andWhere('c.catalogueProjetCables = :catalogue')
+		       ->setParameter('catalogue', $data['catalogueProjetCables']);
+		}
+	    }
 
-        $filterForm = $formFactory->create(CableFilterType::class, null, ['projet_id' => $projet->getId()]);
-        $filterForm->handleRequest($request);
+	    $cables = $qb->getQuery()->getResult();
 
-        $qb = $em->getRepository(Cable::class)->createQueryBuilder('c')
-            ->where('c.projet = :projet')
-            ->setParameter('projet', $projet);
+	    $csvContent = [];
+	    $csvContent[] = ['Nom', 'Longueur', 'Catalogue Projet'];
 
-        if ($filterForm->isSubmitted() && $filterForm->isValid()) {
-            $data = $filterForm->getData();
+	    foreach ($cables as $cable) {
+		$csvContent[] = [
+		    $cable->getNom(),
+		    $cable->getLongueur(),
+		    $cable->getCatalogueProjetCables() ? $cable->getCatalogueProjetCables()->getNom() : 'N/A',
+		];
+	    }
 
-            if ($data['nom']) {
-                $qb->andWhere('c.nom LIKE :nom')
-                   ->setParameter('nom', '%' . $data['nom'] . '%');
-            }
-            if ($data['longueurMin'] !== null) {
-                $qb->andWhere('c.longueur >= :longueurMin')
-                   ->setParameter('longueurMin', $data['longueurMin']);
-            }
-            if ($data['longueurMax'] !== null) {
-                $qb->andWhere('c.longueur <= :longueurMax')
-                   ->setParameter('longueurMax', $data['longueurMax']);
-            }
-            if ($data['catalogueProjetCables']) {
-                $qb->andWhere('c.catalogueProjetCables = :catalogue')
-                   ->setParameter('catalogue', $data['catalogueProjetCables']);
-            }
-        }
+	    $response = new Response($this->arrayToCsv($csvContent));
+	    $disposition = $response->headers->makeDisposition(
+		ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+		'cables_' . $projet->getId() . '_' . date('Ymd_His') . '.csv'
+	    );
+	    $response->headers->set('Content-Type', 'text/csv');
+	    $response->headers->set('Content-Disposition', $disposition);
 
-        $cables = $qb->getQuery()->getResult();
-
-        $csvContent = [];
-        $csvContent[] = ['Nom', 'Longueur', 'Catalogue Projet'];
-
-        foreach ($cables as $cable) {
-            $csvContent[] = [
-                $cable->getNom(),
-                $cable->getLongueur(),
-                $cable->getCatalogueProjetCables() ? $cable->getCatalogueProjetCables()->getNom() : 'N/A',
-            ];
-        }
-
-        $response = new Response($this->arrayToCsv($csvContent));
-        $disposition = $response->headers->makeDisposition(
-            ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-            'cables_' . $projet->getId() . '_' . date('Ymd_His') . '.csv'
-        );
-        $response->headers->set('Content-Type', 'text/csv');
-        $response->headers->set('Content-Disposition', $disposition);
-
-        return $response;
-    }
+	    return $response;
+	}
 
     #[Route('/projet/{projetId}/cables/new', name: 'cable_new', methods: ['GET', 'POST'])]
     public function new(

@@ -2,39 +2,27 @@
 namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Table(name="signal")
- * @ORM\Entity
- */
-class Signal
+#[ORM\Entity]
+#[ORM\Table(name: 'wire_signal')]
+class WireSignal
 {
-    /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
+    private ?int $id = null;
 
-    /**
-     * @ORM\Column(type="string", length=50, unique=true)
-     */
-    private $nom;
+    #[ORM\Column(type: 'string', length: 50, unique: true)]
+    private ?string $nom = null;
 
-    /**
-     * @ORM\Column(type="enum", columnDefinition="ENUM('analogique', 'digital')", nullable=false)
-     */
-    private $type;
+    #[ORM\Column(type: 'string', length: 20, nullable: false)]
+    private string $type;
 
-    /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     */
-    private $details;
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $details = null;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="Projet")
-     * @ORM\JoinColumn(name="id_projet", referencedColumnName="id", nullable=false)
-     */
-    private $projet;
+    #[ORM\ManyToOne(targetEntity: Projet::class, inversedBy: 'wireSignals')]
+    #[ORM\JoinColumn(name: 'id_projet', referencedColumnName: 'id', nullable: false)]
+    private ?Projet $projet = null;
 
     // Getters et Setters
     public function getId(): ?int { return $this->id; }

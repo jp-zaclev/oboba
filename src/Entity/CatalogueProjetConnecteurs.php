@@ -1,46 +1,32 @@
 <?php
-// src/Entity/CatalogueProjetConnecteurs.php
 namespace App\Entity;
-
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\Projet;
 
-/**
- * @ORM\Table(name="catalogue_projet_connecteurs")
- * @ORM\Entity
- */
+#[ORM\Entity]
+#[ORM\Table(name: 'catalogue_projet_connecteurs')]
 class CatalogueProjetConnecteurs
 {
-    /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
+    private ?int $id = null;
 
-    /**
-     * @ORM\Column(type="integer")
-     */
-    private $idProjet;
+    #[ORM\ManyToOne(targetEntity: Projet::class, inversedBy: 'catalogueProjetConnecteurs')]
+    #[ORM\JoinColumn(name: 'id_projet', referencedColumnName: 'id', nullable: false)]
+    private ?Projet $projet = null;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $nom;
+    #[ORM\Column(type: 'string', length: 255, nullable: false)]
+    private string $nom;
 
-    /**
-     * @ORM\Column(type="integer")
-     */
-    private $nombreContacts;
+    #[ORM\Column(type: 'integer', nullable: false)]
+    private int $nombreContacts;
 
-    /**
-     * @ORM\Column(type="string", length=50)
-     */
-    private $type;
+    #[ORM\Column(type: 'string', length: 50, nullable: false)]
+    private string $type;
 
-    /**
-     * @ORM\Column(type="decimal", precision=10, scale=2)
-     */
-    private $prixUnitaire;
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: false)]
+    private float $prixUnitaire;
 
     // Getters et Setters
     public function getId(): ?int
@@ -48,18 +34,18 @@ class CatalogueProjetConnecteurs
         return $this->id;
     }
 
-    public function getIdProjet(): ?int
+    public function getProjet(): ?Projet
     {
-        return $this->idProjet;
+        return $this->projet;
     }
 
-    public function setIdProjet(int $idProjet): self
+    public function setProjet(Projet $projet): self
     {
-        $this->idProjet = $idProjet;
+        $this->projet = $projet;
         return $this;
     }
 
-    public function getNom(): ?string
+    public function getNom(): string
     {
         return $this->nom;
     }
@@ -70,7 +56,7 @@ class CatalogueProjetConnecteurs
         return $this;
     }
 
-    public function getNombreContacts(): ?int
+    public function getNombreContacts(): int
     {
         return $this->nombreContacts;
     }
@@ -81,7 +67,7 @@ class CatalogueProjetConnecteurs
         return $this;
     }
 
-    public function getType(): ?string
+    public function getType(): string
     {
         return $this->type;
     }
@@ -92,12 +78,12 @@ class CatalogueProjetConnecteurs
         return $this;
     }
 
-    public function getPrixUnitaire(): ?string
+    public function getPrixUnitaire(): float
     {
         return $this->prixUnitaire;
     }
 
-    public function setPrixUnitaire(string $prixUnitaire): self
+    public function setPrixUnitaire(float $prixUnitaire): self
     {
         $this->prixUnitaire = $prixUnitaire;
         return $this;

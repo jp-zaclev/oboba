@@ -20,8 +20,8 @@
             <div class="col">{{ form_row(filter_form.type, {'attr': {'class': 'form-control'}}) }}</div>
             <div class="col">{{ form_row(filter_form.nombreConducteursMaxMin, {'attr': {'class': 'form-control'}}) }}</div>
             <div class="col">{{ form_row(filter_form.nombreConducteursMaxMax, {'attr': {'class': 'form-control'}}) }}</div>
-            <div class="col">{{ form_row(filter_form.prixMetreMin, {'attr': {'class': 'form-control'}}) }}</div>
-            <div class="col">{{ form_row(filter_form.prixMetreMax, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.prixUnitaireMin, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.prixUnitaireMax, {'attr': {'class': 'form-control'}}) }}</div>
             <div class="col">
                 <button type="submit" class="btn btn-primary mt-4">Filtrer</button>
             </div>
@@ -37,7 +37,7 @@
                     <th>{{ knp_pagination_sortable(catalogues, 'Nom', 'c.nom') }}</th>
                     <th>{{ knp_pagination_sortable(catalogues, 'Type', 'c.type') }}</th>
                     <th>{{ knp_pagination_sortable(catalogues, 'Nombre max de conducteurs', 'c.nombreConducteursMax') }}</th>
-                    <th>{{ knp_pagination_sortable(catalogues, 'Prix au mètre', 'c.prixMetre') }}</th>
+                    <th>{{ knp_pagination_sortable(catalogues, 'Prix au mètre', 'c.prixUnitaire') }}</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -47,7 +47,7 @@
                         <td>{{ catalogue.nom }}</td>
                         <td>{{ catalogue.type }}</td>
                         <td>{{ catalogue.nombreConducteursMax }}</td>
-                        <td>{{ catalogue.prixMetre|number_format(2, '.', ',') }}</td>
+                        <td>{{ catalogue.prixUnitaire|number_format(2, '.', ',') }}</td>
                         <td>
                             <a href="{{ path('catalogue_modele_cables_edit', {'id': catalogue.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
                             <form method="post" action="{{ path('catalogue_modele_cables_delete', {'id': catalogue.id}) }}" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer ce modèle ?');">

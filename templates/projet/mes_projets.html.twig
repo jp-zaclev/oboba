@@ -1,55 +1,57 @@
+{# templates/projet/mes_projets.html.twig (ou le nom de votre template) #}
 {% extends 'base.html.twig' %}
 
 {% block title %}Mes projets{% endblock %}
 
 {% block body %}
-    <h1>Mes projets</h1>
-
-    <a href="{{ path('projet_mes_projets_new') }}" class="btn btn-success mb-3">Créer un projet</a>
-
-    {% if projets is empty %}
-        <p>Aucun projet associé à votre compte.</p>
-    {% else %}
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>{{ knp_pagination_sortable(projets, 'Nom', 'p.nom') }}</th>
-                    <th>Rôle</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for projet in projets %}
-                    <tr>
-                        <td>{{ projet.nom }}</td>
-                        <td>
-                            {% for pu in projet.projetUtilisateurs|filter(pu => pu.utilisateur == app.user) %}
-                                {{ pu.role|capitalize }}
-                            {% endfor %}
-                        </td>
-                        <td>
-                            {% set role = projet.projetUtilisateurs|filter(pu => pu.utilisateur == app.user)|first.role %}
-                            {% if role in ['proprietaire', 'concepteur'] %}
-                                <a href="{{ path('cable_list', {'projetId': projet.id}) }}" class="btn btn-sm btn-info">Câbles</a>
-                                <a href="{{ path('connecteur_list', {'projetId': projet.id}) }}" class="btn btn-sm btn-info">Connecteurs</a>
-                            {% else %}
-                                <span class="text-muted">Consultation uniquement</span>
-                            {% endif %}
-                            {% if role == 'proprietaire' %}
-                                <a href="{{ path('projet_recrutement', {'id': projet.id}) }}" class="btn btn-sm btn-primary">Recrutement</a>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <div class="navigation">
-            {{ knp_pagination_render(projets) }}
+    <div class="hero-section">
+        <div class="background-gradient">
+            <div class="gradient-top"></div>
+            <div class="gradient-bottom"></div>
         </div>
-    {% endif %}
+        <div class="content">
+            <div class="container">
+                <h1 class="text-white">Mes projets</h1>
 
-    {% for message in app.flashes('success') %}
-        <div class="alert alert-success mt-3">{{ message }}</div>
-    {% endfor %}
+                <a href="{{ path('projet_mes_projets_new') }}" class="btn btn-success mb-3">Créer un projet</a>
+
+                {% if projets is empty %}
+                    <p class="text-white">Aucun projet associé à votre compte.</p>
+                {% else %}
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>{{ knp_pagination_sortable(projets, 'Nom', 'p.nom') }}</th>
+                                <th>Rôle</th>
+                                <th>{{ knp_pagination_sortable(projets, 'Date de création', 'p.dateHeureCreation') }}</th>
+                                <th>{{ knp_pagination_sortable(projets, 'Dernière modification', 'p.dateHeureDerniereModification') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for projet in projets %}
+                                <tr>
+                                    <td><a href="{{ path('projet_show', {'id': projet.id}) }}">{{ projet.nom }}</a></td>
+                                    <td>
+                                        {% for pu in projet.projetUtilisateurs|filter(pu => pu.utilisateur == app.user) %}
+                                            {{ pu.role|capitalize }}
+                                        {% endfor %}
+                                    </td>
+                                    <td>{{ projet.dateHeureCreation|date('d/m/Y H:i') }}</td>
+                                    <td>{{ projet.dateHeureDerniereModification|date('d/m/Y H:i') }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="navigation">
+                        {{ knp_pagination_render(projets) }}
+                    </div>
+                {% endif %}
+
+                {% for message in app.flashes('success') %}
+                    <div class="alert alert-success mt-3">{{ message }}</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
 {% endblock %}

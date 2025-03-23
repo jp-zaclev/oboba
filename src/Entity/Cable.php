@@ -1,43 +1,41 @@
 <?php
-// src/Entity/Cable.php
+
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Table(name="cable")
- * @ORM\Entity
- */
+#[ORM\Entity]
+#[ORM\Table(name: 'cable')]
 class Cable
 {
-    /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
+    private ?int $id = null;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $nom;
+    #[ORM\Column(type: 'string', length: 255)]
+    private ?string $nom = null;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="Projet", inversedBy="cables")
-     * @ORM\JoinColumn(name="id_projet", referencedColumnName="id")
-     */
-    private $projet;
+    #[ORM\ManyToOne(targetEntity: Projet::class, inversedBy: 'cables')]
+    #[ORM\JoinColumn(name: 'id_projet', referencedColumnName: 'id')]
+    private ?Projet $projet = null;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="CatalogueProjetCables")
-     * @ORM\JoinColumn(name="id_catalogue_projet_cable", referencedColumnName="id", nullable=true)
-     */
-    private $catalogueProjetCables;
+    #[ORM\ManyToOne(targetEntity: CatalogueProjetCables::class)]
+    #[ORM\JoinColumn(name: 'id_catalogue_projet_cable', referencedColumnName: 'id', nullable: true)]
+    private ?CatalogueProjetCables $catalogueProjetCables = null;
 
-    /**
-     * @ORM\Column(type="integer", nullable=true)
-     */
-    private $longueur;
+    #[ORM\OneToMany(targetEntity: Conducteur::class, mappedBy: 'cable', cascade: ['persist', 'remove'])]
+    private Collection $conducteurs;
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $longueur = null;
+
+    public function __construct()
+    {
+        $this->conducteurs = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -74,6 +72,30 @@ class Cable
     public function setCatalogueProjetCables(?CatalogueProjetCables $catalogueProjetCables): self
     {
         $this->catalogueProjetCables = $catalogueProjetCables;
+        return $this;
+    }
+
+    public function getConducteurs(): Collection
+    {
+        return $this->conducteurs;
+    }
+
+    public function addConducteur(Conducteur $conducteur): self
+    {
+        if (!$this->conducteurs->contains($conducteur)) {
+            $this->conducteurs[] = $conducteur;
+            $conducteur->setCable($this);
+        }
+        return $this;
+    }
+
+    public function removeConducteur(Conducteur $conducteur): self
+    {
+        if ($this->conducteurs->removeElement($conducteur)) {
+            if ($conducteur->getCable() === $this) {
+                $conducteur->setCable(null);
+            }
+        }
         return $this;
     }
 

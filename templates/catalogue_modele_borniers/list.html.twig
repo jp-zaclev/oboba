@@ -1,0 +1,74 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Catalogue des modèles de borniers - Oboba{% endblock %}
+
+{% block body %}
+    <h1>Catalogue des modèles de borniers</h1>
+
+    <div class="mb-3">
+        <div class="row g-2">
+            <div class="col-auto">
+                <a href="{{ path('catalogue_modele_borniers_new') }}" class="btn btn-primary">Ajouter un modèle de bornier</a>
+            </div>
+        </div>
+    </div>
+
+    {{ form_start(filter_form, {'method': 'GET'}) }}
+        <div class="row mb-3">
+            <div class="col">{{ form_row(filter_form.nom, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.nombreBornesMin, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.nombreBornesMax, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.caracteristiques, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.prixUnitaireMin, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.prixUnitaireMax, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">
+                <button type="submit" class="btn btn-primary mt-4">Filtrer</button>
+            </div>
+        </div>
+    {{ form_end(filter_form) }}
+
+    {% if borniers is empty %}
+        <p>Aucun modèle de bornier disponible pour le moment.</p>
+    {% else %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>{{ knp_pagination_sortable(borniers, 'Nom', 'b.nom') }}</th>
+                    <th>{{ knp_pagination_sortable(borniers, 'Nombre de bornes', 'b.nombreBornes') }}</th>
+                    <th>{{ knp_pagination_sortable(borniers, 'Caractéristiques', 'b.caracteristiques') }}</th>
+                    <th>{{ knp_pagination_sortable(borniers, 'Prix unitaire', 'b.prixUnitaire') }}</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bornier in borniers %}
+                    <tr>
+                        <td>{{ bornier.nom }}</td>
+                        <td>{{ bornier.nombreBornes }}</td>
+                        <td>{{ bornier.caracteristiques }}</td>
+                        <td>{{ bornier.prixUnitaire|number_format(2, '.', ',') }}</td>
+                        <td>
+                            <a href="{{ path('catalogue_modele_borniers_edit', {'id': bornier.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                            <form method="post" action="{{ path('catalogue_modele_borniers_delete', {'id': bornier.id}) }}" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer ce modèle ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ bornier.id) }}">
+                                <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="navigation">
+            {{ knp_pagination_render(borniers) }}
+        </div>
+    {% endif %}
+
+    {% for message in app.flashes %}
+        {% for msg in message %}
+            <div class="alert alert-{{ loop.parent.loop.key == 'success' ? 'success' : 'danger' }} mt-3">
+                {{ msg }}
+            </div>
+        {% endfor %}
+    {% endfor %}
+{% endblock %}

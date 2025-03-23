@@ -51,11 +51,11 @@ class CatalogueModeleCablesController extends AbstractController
             if ($data['nombreConducteursMaxMax']) {
                 $qb->andWhere('c.nombreConducteursMax <= :conducteursMax')->setParameter('conducteursMax', $data['nombreConducteursMaxMax']);
             }
-            if ($data['prixMetreMin']) {
-                $qb->andWhere('c.prixMetre >= :prixMin')->setParameter('prixMin', $data['prixMetreMin']);
+            if ($data['prixUnitaireMin']) {
+                $qb->andWhere('c.prixUnitaire >= :prixMin')->setParameter('prixMin', $data['prixUnitaireMin']);
             }
-            if ($data['prixMetreMax']) {
-                $qb->andWhere('c.prixMetre <= :prixMax')->setParameter('prixMax', $data['prixMetreMax']);
+            if ($data['prixUnitaireMax']) {
+                $qb->andWhere('c.prixUnitaire <= :prixMax')->setParameter('prixMax', $data['prixUnitaireMax']);
             }
         }
 

@@ -4,6 +4,7 @@ doctrine:
         # IMPORTANT: You MUST configure your server version,
         # either here or in the DATABASE_URL env var (see .env file)
         #server_version: '16'
+        server_version: '10.6' # MariaDB 10.6
         use_savepoints: true
         types:
             enum: App\Doctrine\EnumType
@@ -16,6 +17,7 @@ doctrine:
         mappings:
             App:
                 is_bundle: false
+                type: attribute
                 dir: '%kernel.project_dir%/src/Entity'
                 prefix: 'App\Entity'
                 alias: App

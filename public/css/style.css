@@ -1,0 +1,180 @@
+/* public/css/style.css */
+
+/* Fond global noir */
+body {
+    background-color: #000;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+}
+
+/* Navbar */
+.navbar-text.user-name {
+    color: red;
+    font-weight: bold;
+}
+
+.navbar-custom {
+    background-color: #050505;
+    width: 100%;
+/*    position: fixed; /* Rétablit la position fixée */
+/*    top: 0; /* Colle la navbar en haut */
+    width: 100%;
+    z-index: 1000; /* Assure qu'elle est au-dessus de tout */
+}
+
+.navbar-custom .nav-link {
+    color: #ccc;
+}
+
+.navbar-custom .nav-link:hover {
+    color: #fff;
+}
+
+.hero-section {
+    position: relative;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    border-bottom: 1px solid #000;
+    padding-top: 0px;
+    z-index: 1; /* Inférieur à la navbar */
+}
+
+.background-gradient {
+    position: absolute;
+    top: -25%;
+    bottom: -25%;
+    right: -6rem;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    filter: blur(10px);
+    mask-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
+}
+
+.gradient-top {
+    flex-grow: 1;
+    background: conic-gradient(
+        from 180deg at 99% 40%,
+        #ffffff 18deg,
+        #ffd086 36deg,
+        rgba(17, 17, 17, 0) 90deg,
+        rgba(17, 17, 17, 0) 342deg,
+        #ffffff 360deg
+    );
+}
+
+.gradient-bottom {
+    flex-grow: 1;
+    background: conic-gradient(
+        from 0deg at 99% 60%,
+        #ffffff 0deg,
+        rgba(17, 17, 17, 0) 18deg,
+        rgba(17, 17, 17, 0) 270deg,
+        #ffd086 324deg,
+        #ffffff 342deg
+    );
+}
+
+.content {
+    position: relative;
+    z-index: 20;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    padding-top: 0;
+    margin-top: 0px;
+    min-height: calc(100vh - 60px);
+    padding-bottom: 0px;
+    box-sizing: border-box;
+}
+
+.form-container {
+    width: 100%;
+    max-width: 512px;
+    margin-top: 3rem;
+}
+
+.gradient-form {
+    position: relative;
+    background: linear-gradient(to top right, rgba(0, 123, 255, 0.05), rgba(0, 123, 255, 0.2));
+    padding: 1px;
+    border-radius: 50rem;
+}
+
+.gradient-form .form-control {
+    background: transparent;
+    border: none;
+    color: #007bff;
+    border-radius: 50rem;
+}
+
+.gradient-form .form-control:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.gradient-form .btn {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 123, 255, 0.2);
+    border: none;
+    border-radius: 50rem;
+}
+
+.gradient-form .btn:hover {
+    background: rgba(0, 123, 255, 0.3);
+}
+
+.card {
+    background-color: transparent;
+    border: 0px solid rgba(0, 0, 0, 0.1);
+}
+
+.card-body {
+    background-color: transparent;
+    color: #aaa;
+}
+
+.card-title {
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Dans public/css/style.css, remplacez les styles du tableau par ceci */
+div.hero-section div.content div.container table.table.table-striped {
+    background-color: rgba(60, 60, 60, 0.2) !important; /* Gris foncé, 20% d'opacité */
+}
+
+div.hero-section div.content div.container table.table.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(100, 100, 100, 0.2) !important; /* Lignes alternées */
+}
+
+div.hero-section div.content div.container table.table.table-striped th,
+div.hero-section div.content div.container table.table.table-striped td {
+    background-color: transparent !important; /* Pas de fond sur les cellules individuelles */
+    color: #fff !important; /* Texte blanc */
+    border: none !important;
+}
+
+div.hero-section div.content div.container table.table.table-striped a {
+    color: #aaa !important; /* Liens gris clair */
+}
+
+div.hero-section div.content div.container table.table.table-striped a:hover {
+    color: #fff !important; /* Liens blancs au survol */
+}
+
+/* Pagination */
+.navigation .pagination .page-link {
+    color: #aaa;
+    background-color: #202020;
+    border-color: #333;
+}
+
+.navigation .pagination .page-link:hover {
+    color: #fff;
+    background-color: #333;
+}

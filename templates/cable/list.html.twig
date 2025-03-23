@@ -8,6 +8,10 @@
 
     <div class="mb-3">
         <div class="row g-2">
+            {# Bouton Retour #}
+            <div class="col-auto">
+                <a href="{{ path('projet_show', {'id': projet.id}) }}" class="btn btn-secondary">Retour à {{ projet.nom }}</a>
+            </div>
             {% if is_granted('CAN_EDIT_CABLES', projet) %}
                 <div class="col-auto">
                     <a href="{{ path('cable_new', {'projetId': projet.id}) }}" class="btn btn-primary">Ajouter un câble</a>
@@ -39,7 +43,7 @@
                 <tr>
                     <th>{{ knp_pagination_sortable(cables, 'Nom', 'c.nom') }}</th>
                     <th>{{ knp_pagination_sortable(cables, 'Longueur', 'c.longueur') }}</th>
-                    <th>{{ knp_pagination_sortable(cables, 'Catalogue', 'cat.nom') }}</th> {# Jointure nécessaire pour trier sur catalogueProjetCables.nom #}
+                    <th>{{ knp_pagination_sortable(cables, 'Catalogue', 'cat.nom') }}</th>
                     <th>Actions</th>
                 </tr>
             </thead>

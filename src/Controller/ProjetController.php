@@ -1,9 +1,12 @@
 <?php
+
 namespace App\Controller;
 
 use App\Entity\Projet;
 use App\Entity\ProjetUtilisateur;
 use App\Entity\Utilisateur;
+use App\Entity\CatalogueModeleCables; 
+use App\Entity\CatalogueProjetCables; 
 use App\Form\ProjetType;
 use App\Form\ProjetRecrutementType;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
@@ -32,7 +35,7 @@ class ProjetController extends AbstractController
             $request->query->getInt('page', 1),
             10,
             [
-                'defaultSortFieldName' => 'p.nom', // Tri par défaut sur le nom
+                'defaultSortFieldName' => 'p.nom',
                 'defaultSortDirection' => 'asc',
             ]
         );
@@ -42,64 +45,63 @@ class ProjetController extends AbstractController
         ]);
     }
 
+    #[Route('/new', name: 'projet_new', methods: ['GET', 'POST'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function new(Request $request, EntityManagerInterface $em): Response
+    {
+        $projet = new Projet();
+        $form = $this->createForm(ProjetType::class, $projet);
+        $form->handleRequest($request);
 
-	#[Route('/new', name: 'projet_new', methods: ['GET', 'POST'])]
-	#[IsGranted('ROLE_ADMIN')]
-	public function new(Request $request, EntityManagerInterface $em): Response
-	{
-	    $projet = new Projet();
-	    $form = $this->createForm(ProjetType::class, $projet);
-	    $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $proprietaireId = $request->request->get('proprietaire');
+            $concepteursIds = $request->request->get('concepteurs', []);
+            $lecteursIds = $request->request->get('lecteurs', []);
 
-	    if ($form->isSubmitted() && $form->isValid()) {
-		$proprietaireId = $request->request->get('proprietaire');
-		$concepteursIds = $request->request->get('concepteurs', []);
-		$lecteursIds = $request->request->get('lecteurs', []);
+            if ($proprietaireId) {
+                $proprietaire = $em->getRepository(Utilisateur::class)->find($proprietaireId);
+                if ($proprietaire) {
+                    $puProprietaire = new ProjetUtilisateur();
+                    $puProprietaire->setProjet($projet)
+                                   ->setUtilisateur($proprietaire)
+                                   ->setRole('proprietaire');
+                    $projet->addProjetUtilisateur($puProprietaire);
+                }
+            }
 
-		if ($proprietaireId) {
-		    $proprietaire = $em->getRepository(Utilisateur::class)->find($proprietaireId);
-		    if ($proprietaire) {
-		        $puProprietaire = new ProjetUtilisateur();
-		        $puProprietaire->setProjet($projet)
-		                       ->setUtilisateur($proprietaire)
-		                       ->setRole('proprietaire');
-		        $projet->addProjetUtilisateur($puProprietaire);
-		    }
-		}
+            foreach ($concepteursIds as $concepteurId) {
+                $concepteur = $em->getRepository(Utilisateur::class)->find($concepteurId);
+                if ($concepteur) {
+                    $pu = new ProjetUtilisateur();
+                    $pu->setProjet($projet)->setUtilisateur($concepteur)->setRole('concepteur');
+                    $projet->addProjetUtilisateur($pu);
+                }
+            }
 
-		foreach ($concepteursIds as $concepteurId) {
-		    $concepteur = $em->getRepository(Utilisateur::class)->find($concepteurId);
-		    if ($concepteur) {
-		        $pu = new ProjetUtilisateur();
-		        $pu->setProjet($projet)->setUtilisateur($concepteur)->setRole('concepteur');
-		        $projet->addProjetUtilisateur($pu);
-		    }
-		}
+            foreach ($lecteursIds as $lecteurId) {
+                $lecteur = $em->getRepository(Utilisateur::class)->find($lecteurId);
+                if ($lecteur) {
+                    $pu = new ProjetUtilisateur();
+                    $pu->setProjet($projet)->setUtilisateur($lecteur)->setRole('lecteur');
+                    $projet->addProjetUtilisateur($pu);
+                }
+            }
 
-		foreach ($lecteursIds as $lecteurId) {
-		    $lecteur = $em->getRepository(Utilisateur::class)->find($lecteurId);
-		    if ($lecteur) {
-		        $pu = new ProjetUtilisateur();
-		        $pu->setProjet($projet)->setUtilisateur($lecteur)->setRole('lecteur');
-		        $projet->addProjetUtilisateur($pu);
-		    }
-		}
+            $projet->setDateHeureDerniereModification(new \DateTime());
+            $em->persist($projet);
+            $em->flush();
 
-		$projet->setDateHeureDerniereModification(new \DateTime());
-		$em->persist($projet);
-		$em->flush();
+            $this->addFlash('success', 'Projet créé avec succès.');
+            return $this->redirectToRoute('projet_list');
+        }
 
-		$this->addFlash('success', 'Projet créé avec succès.');
-		return $this->redirectToRoute('projet_list');
-	    }
+        $utilisateurs = $em->getRepository(Utilisateur::class)->findAll();
 
-	    $utilisateurs = $em->getRepository(Utilisateur::class)->findAll();
-
-	    return $this->render('projet/new.html.twig', [
-		'form' => $form->createView(),
-		'utilisateurs' => $utilisateurs,
-	    ]);
-	}
+        return $this->render('projet/new.html.twig', [
+            'form' => $form->createView(),
+            'utilisateurs' => $utilisateurs,
+        ]);
+    }
 
     #[Route('/{id}/edit', name: 'projet_edit', methods: ['GET', 'POST'])]
     #[IsGranted('ROLE_ADMIN')]
@@ -109,13 +111,11 @@ class ProjetController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Supprimer les anciens ProjetUtilisateur
             foreach ($projet->getProjetUtilisateurs() as $pu) {
                 $em->remove($pu);
             }
             $projet->getProjetUtilisateurs()->clear();
 
-            // Ajouter le nouveau propriétaire
             $proprietaire = $form->get('proprietaire')->getData();
             $puProprietaire = new ProjetUtilisateur();
             $puProprietaire->setProjet($projet)
@@ -123,14 +123,12 @@ class ProjetController extends AbstractController
                            ->setRole('proprietaire');
             $projet->addProjetUtilisateur($puProprietaire);
 
-            // Ajouter les nouveaux concepteurs
             foreach ($form->get('concepteurs')->getData() as $concepteur) {
                 $pu = new ProjetUtilisateur();
                 $pu->setProjet($projet)->setUtilisateur($concepteur)->setRole('concepteur');
                 $projet->addProjetUtilisateur($pu);
             }
 
-            // Ajouter les nouveaux lecteurs
             foreach ($form->get('lecteurs')->getData() as $lecteur) {
                 $pu = new ProjetUtilisateur();
                 $pu->setProjet($projet)->setUtilisateur($lecteur)->setRole('lecteur');
@@ -162,7 +160,7 @@ class ProjetController extends AbstractController
 
         return $this->redirectToRoute('projet_list');
     }
-    
+
     #[Route('/mes-projets', name: 'projet_mes_projets', methods: ['GET'])]
     public function mesProjets(EntityManagerInterface $em, Request $request, PaginatorInterface $paginator): Response
     {
@@ -172,17 +170,17 @@ class ProjetController extends AbstractController
         }
 
         $qb = $em->getRepository(Projet::class)->createQueryBuilder('p')
-            ->innerJoin('p.projetUtilisateurs', 'pu') // Jointure avec ProjetUtilisateur
+            ->innerJoin('p.projetUtilisateurs', 'pu')
             ->where('pu.utilisateur = :utilisateur')
             ->setParameter('utilisateur', $utilisateur)
-            ->addSelect('pu'); // Inclure les données de la jointure
+            ->addSelect('pu');
 
         $projets = $paginator->paginate(
             $qb->getQuery(),
             $request->query->getInt('page', 1),
             10,
             [
-                'defaultSortFieldName' => 'p.nom', // Tri par défaut sur le nom
+                'defaultSortFieldName' => 'p.nom',
                 'defaultSortDirection' => 'asc',
             ]
         );
@@ -191,39 +189,51 @@ class ProjetController extends AbstractController
             'projets' => $projets,
         ]);
     }
-    
+
     #[Route('/mes-projets/new', name: 'projet_mes_projets_new', methods: ['GET', 'POST'])]
-	public function mesProjetsNew(Request $request, EntityManagerInterface $em): Response
-	{
-	    $utilisateur = $this->getUser();
-	    if (!$utilisateur) {
-		return $this->redirectToRoute('login');
-	    }
+    public function mesProjetsNew(Request $request, EntityManagerInterface $em): Response
+    {
+        $utilisateur = $this->getUser();
+        if (!$utilisateur) {
+            return $this->redirectToRoute('login');
+        }
 
-	    $projet = new Projet();
-	    $form = $this->createForm(ProjetType::class, $projet);
-	    $form->handleRequest($request);
+        $projet = new Projet();
+        $form = $this->createForm(ProjetType::class, $projet);
+        $form->handleRequest($request);
 
-	    if ($form->isSubmitted() && $form->isValid()) {
-		$pu = new ProjetUtilisateur();
-		$pu->setProjet($projet)
-		   ->setUtilisateur($utilisateur)
-		   ->setRole('proprietaire');
+        if ($form->isSubmitted() && $form->isValid()) {
+            $pu = new ProjetUtilisateur();
+            $pu->setProjet($projet)
+               ->setUtilisateur($utilisateur)
+               ->setRole('proprietaire');
 
-		$em->persist($projet);
-		$em->persist($pu);
-		$em->flush();
+            $modeleCables = $em->getRepository(CatalogueModeleCables::class)->findAll();
+            foreach ($modeleCables as $modele) {
+                $projetCable = new CatalogueProjetCables();
+                $projetCable->setProjet($projet)
+                            ->setNom($modele->getNom())
+                            ->setNombreConducteursMax($modele->getNombreConducteursMax())
+                            ->setPrixUnitaire($modele->getPrixUnitaire())
+                            ->setType($modele->getType());
+                $em->persist($projetCable);
+                $projet->addCatalogueProjetCable($projetCable);
+            }
 
-		$this->addFlash('success', 'Projet créé avec succès.');
-		return $this->redirectToRoute('projet_mes_projets');
-	    }
+            $em->persist($projet);
+            $em->persist($pu);
+            $em->flush();
 
-	    return $this->render('projet/mes_projets_new.html.twig', [
-		'form' => $form->createView(),
-	    ]);
-	}
-	
-#[Route('/{id}/recrutement', name: 'projet_recrutement', methods: ['GET', 'POST'])]
+            $this->addFlash('success', 'Projet créé avec succès.');
+            return $this->redirectToRoute('projet_mes_projets');
+        }
+
+        return $this->render('projet/mes_projets_new.html.twig', [
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/{id}/recrutement', name: 'projet_recrutement', methods: ['GET', 'POST'])]
     public function recrutement(Request $request, Projet $projet, EntityManagerInterface $em): Response
     {
         $utilisateur = $this->getUser();
@@ -256,7 +266,7 @@ class ProjetController extends AbstractController
             $roles = $data['roles'];
 
             foreach ($utilisateurs as $index => $recru) {
-                if ($recru) { // Vérifie que l'utilisateur n'est pas null
+                if ($recru) {
                     $role = $roles[$index] ?? 'lecteur';
                     $existing = $projetUtilisateurs->filter(fn($pu) => $pu->getUtilisateur() && $pu->getUtilisateur()->getId() === $recru->getId())->first();
                     if (!$existing) {
@@ -281,48 +291,47 @@ class ProjetController extends AbstractController
             'isAdmin' => $this->isGranted('ROLE_ADMIN'),
             'isProprietaire' => $isProprietaire,
         ]);
-    }    
-    	#[Route('/{id}/revoquer/{projetUtilisateurId}', name: 'projet_revoquer', methods: ['POST'])]
-	public function revoquer(Request $request, Projet $projet, int $projetUtilisateurId, EntityManagerInterface $em): Response
-	{
-	    $utilisateur = $this->getUser();
-	    if (!$utilisateur) {
-		return $this->redirectToRoute('login');
-	    }
+    }
 
-	    $projetUtilisateur = $em->getRepository(ProjetUtilisateur::class)->find($projetUtilisateurId);
-	    if (!$projetUtilisateur || $projetUtilisateur->getProjet() !== $projet) {
-		throw $this->createNotFoundException('Utilisateur ou projet non trouvé.');
-	    }
+    #[Route('/{id}/revoquer/{projetUtilisateurId}', name: 'projet_revoquer', methods: ['POST'])]
+    public function revoquer(Request $request, Projet $projet, int $projetUtilisateurId, EntityManagerInterface $em): Response
+    {
+        $utilisateur = $this->getUser();
+        if (!$utilisateur) {
+            return $this->redirectToRoute('login');
+        }
 
-	    $isAdmin = $this->isGranted('ROLE_ADMIN');
-	    $isProprietaire = $projet->getProjetUtilisateurs()->exists(function ($key, $pu) {
-		return $pu instanceof ProjetUtilisateur && $pu->getUtilisateur() === $this->getUser() && $pu->getRole() === 'proprietaire';
-	    });
+        $projetUtilisateur = $em->getRepository(ProjetUtilisateur::class)->find($projetUtilisateurId);
+        if (!$projetUtilisateur || $projetUtilisateur->getProjet() !== $projet) {
+            throw $this->createNotFoundException('Utilisateur ou projet non trouvé.');
+        }
 
-	    if (!$isAdmin && !$isProprietaire) {
-		throw $this->createAccessDeniedException('Vous n’avez pas le droit de révoquer.');
-	    }
+        $isAdmin = $this->isGranted('ROLE_ADMIN');
+        $isProprietaire = $projet->getProjetUtilisateurs()->exists(function ($key, $pu) {
+            return $pu instanceof ProjetUtilisateur && $pu->getUtilisateur() === $this->getUser() && $pu->getRole() === 'proprietaire';
+        });
 
-	    $role = $projetUtilisateur->getRole();
-	    if ($isProprietaire && !$isAdmin && $role === 'proprietaire') {
-		throw $this->createAccessDeniedException('Un propriétaire ne peut pas révoquer un autre propriétaire.');
-	    }
+        if (!$isAdmin && !$isProprietaire) {
+            throw $this->createAccessDeniedException('Vous n’avez pas le droit de révoquer.');
+        }
 
-	    if ($this->isCsrfTokenValid('revoquer_' . $projetUtilisateurId, $request->request->get('_token'))) {
-		$em->remove($projetUtilisateur);
-		$em->flush();
-		$this->addFlash('success', 'Droits de l’utilisateur révoqués avec succès.');
-	    } else {
-		$this->addFlash('danger', 'Erreur de sécurité lors de la révocation.');
-	    }
+        $role = $projetUtilisateur->getRole();
+        if ($isProprietaire && !$isAdmin && $role === 'proprietaire') {
+            throw $this->createAccessDeniedException('Un propriétaire ne peut pas révoquer un autre propriétaire.');
+        }
 
-	    return $this->redirectToRoute('projet_recrutement', ['id' => $projet->getId()]);
-	}
-	
-	
-	
-#[Route('/{id}/assigner-proprietaire', name: 'projet_assigner_proprietaire', methods: ['GET', 'POST'])]
+        if ($this->isCsrfTokenValid('revoquer_' . $projetUtilisateurId, $request->request->get('_token'))) {
+            $em->remove($projetUtilisateur);
+            $em->flush();
+            $this->addFlash('success', 'Droits de l’utilisateur révoqués avec succès.');
+        } else {
+            $this->addFlash('danger', 'Erreur de sécurité lors de la révocation.');
+        }
+
+        return $this->redirectToRoute('projet_recrutement', ['id' => $projet->getId()]);
+    }
+
+    #[Route('/{id}/assigner-proprietaire', name: 'projet_assigner_proprietaire', methods: ['GET', 'POST'])]
     public function assignerProprietaire(Request $request, Projet $projet, EntityManagerInterface $em): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
@@ -347,7 +356,6 @@ class ProjetController extends AbstractController
                 return $this->redirectToRoute('projet_list');
             }
 
-	    // Supprime uniquement les orphelins (utilisateur_id = NULL)
             $orphelins = $em->getRepository(ProjetUtilisateur::class)->findBy([
                 'projet' => $projet,
                 'utilisateur' => null,
@@ -356,8 +364,7 @@ class ProjetController extends AbstractController
             foreach ($orphelins as $orphelin) {
                 $em->remove($orphelin);
             }
-            
-            // Ajoute le nouveau propriétaire
+
             $pu = new ProjetUtilisateur();
             $pu->setProjet($projet)
                ->setUtilisateur($utilisateur)
@@ -372,6 +379,27 @@ class ProjetController extends AbstractController
         return $this->render('projet/assigner_proprietaire.html.twig', [
             'projet' => $projet,
             'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/{id}', name: 'projet_show', methods: ['GET'])]
+    public function show(Projet $projet): Response
+    {
+        $utilisateur = $this->getUser();
+        if (!$utilisateur) {
+            return $this->redirectToRoute('login');
+        }
+
+        $isAuthorized = $projet->getProjetUtilisateurs()->exists(function ($key, $pu) use ($utilisateur) {
+            return $pu instanceof ProjetUtilisateur && $pu->getUtilisateur() && $pu->getUtilisateur()->getId() === $utilisateur->getId();
+        });
+
+        if (!$isAuthorized) {
+            throw $this->createAccessDeniedException('Vous n’avez pas accès à ce projet.');
+        }
+
+        return $this->render('projet/show.html.twig', [
+            'projet' => $projet,
         ]);
     }
 }

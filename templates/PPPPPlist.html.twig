@@ -22,7 +22,7 @@
                 <option value="coaxial" {{ app.request.query.get('type') == 'coaxial' ? 'selected' }}>Coaxial</option>
                 <option value="multiconducteur" {{ app.request.query.get('type') == 'multiconducteur' ? 'selected' }}>Multiconducteur</option>
             </select>
-            <input type="number" name="prix_max" class="form-control" placeholder="Prix max (€/m)" step="0.01" value="{{ app.request.query.get('prix_max') }}">
+            <input type="number" name="prix_max" class="form-control" placeholder="Prix max" step="0.01" value="{{ app.request.query.get('prix_max') }}">
             <button type="submit" class="btn btn-secondary">Filtrer</button>
         </form>
     </div>
