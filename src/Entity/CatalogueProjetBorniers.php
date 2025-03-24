@@ -26,7 +26,8 @@ class CatalogueProjetBorniers
     private ?string $caracteristiques = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: false)]
-    private float $prixUnitaire;
+    private float $prixUnitaire = 0.00;
+
 
     public function getId(): ?int { return $this->id; }
     public function getProjet(): ?Projet { return $this->projet; }

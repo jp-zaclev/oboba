@@ -24,8 +24,8 @@ class CatalogueProjetCables
     #[ORM\Column(type: 'integer')]
     private ?int $nombreConducteursMax = null;
 
-    #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private float|string|null $prixUnitaire = null;
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: false)]
+    private float $prixUnitaire = 0.00;
 
     #[ORM\Column(type: 'string', length: 50)]
     private ?string $type = null;

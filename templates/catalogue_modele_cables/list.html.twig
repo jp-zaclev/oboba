@@ -1,10 +1,12 @@
 {# templates/catalogue_modele_cables/list.html.twig #}
-{% extends 'base.html.twig' %}
+{% extends 'layout/project_layout.html.twig' %}
+
+{% set container_margin = false %} {# Pas de mt-4 ici #}
 
 {% block title %}Catalogue des modèles de câbles - Oboba{% endblock %}
 
-{% block body %}
-    <h1>Catalogue des modèles de câbles</h1>
+{% block page_content %}
+    <h1 class="text-white">Catalogue des modèles de câbles</h1>
 
     <div class="mb-3">
         <div class="row g-2">
@@ -16,8 +18,8 @@
 
     {{ form_start(filter_form, {'method': 'GET'}) }}
         <div class="row mb-3">
-            <div class="col">{{ form_row(filter_form.nom, {'attr': {'class': 'form-control'}}) }}</div>
-            <div class="col">{{ form_row(filter_form.type, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.nom, {'attr': {'class': 'form-control w-100'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.type, {'attr': {'class': 'form-control w-100'}}) }}</div>
             <div class="col">{{ form_row(filter_form.nombreConducteursMaxMin, {'attr': {'class': 'form-control'}}) }}</div>
             <div class="col">{{ form_row(filter_form.nombreConducteursMaxMax, {'attr': {'class': 'form-control'}}) }}</div>
             <div class="col">{{ form_row(filter_form.prixUnitaireMin, {'attr': {'class': 'form-control'}}) }}</div>
@@ -29,7 +31,7 @@
     {{ form_end(filter_form) }}
 
     {% if catalogues is empty %}
-        <p>Aucun modèle de câble disponible pour le moment.</p>
+        <p class="text-white">Aucun modèle de câble disponible pour le moment.</p>
     {% else %}
         <table class="table table-striped">
             <thead>
@@ -64,12 +66,4 @@
             {{ knp_pagination_render(catalogues) }}
         </div>
     {% endif %}
-
-    {% for message in app.flashes %}
-        {% for msg in message %}
-            <div class="alert alert-{{ loop.parent.loop.key == 'success' ? 'success' : 'danger' }} mt-3">
-                {{ msg }}
-            </div>
-        {% endfor %}
-    {% endfor %}
 {% endblock %}

@@ -1,37 +1,41 @@
-{# templates/catalogue_modele_borniers/list.html.twig #}
+{# templates/catalogue_projet_borniers/list.html.twig #}
 {% extends 'layout/project_layout.html.twig' %}
 
-{% set container_margin = false %} {# Pas de mt-4 ici #}
+{% set container_margin = false %}
 
-{% block title %}Catalogue des modèles de borniers - Oboba{% endblock %}
+{% block title %}Catalogue des borniers - {{ projet.nom }}{% endblock %}
 
 {% block page_content %}
-    <h1 class="text-white">Catalogue des modèles de borniers</h1>
+    <h1 class="text-white">Catalogue des borniers pour {{ projet.nom }}</h1>
 
     <div class="mb-3">
         <div class="row g-2">
             <div class="col-auto">
-                <a href="{{ path('catalogue_modele_borniers_new') }}" class="btn btn-primary">Ajouter un modèle de bornier</a>
+                <a href="{{ path('projet_show', {'id': projet.id}) }}" class="btn btn-secondary">Retour à {{ projet.nom }}</a>
             </div>
+            {% if is_granted('CAN_EDIT_CABLES', projet) %}
+                <div class="col-auto">
+                    <a href="{{ path('catalogue_projet_borniers_new', {'projetId': projet.id}) }}" class="btn btn-primary">Ajouter un bornier</a>
+                </div>
+            {% endif %}
         </div>
     </div>
 
     {{ form_start(filter_form, {'method': 'GET'}) }}
         <div class="row mb-3">
             <div class="col">{{ form_row(filter_form.nom, {'attr': {'class': 'form-control'}}) }}</div>
-            <div class="col">{{ form_row(filter_form.nombreBornesMin, {'attr': {'class': 'form-control'}}) }}</div>
-            <div class="col">{{ form_row(filter_form.nombreBornesMax, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.nombreBornes, {'attr': {'class': 'form-control'}}) }}</div>
             <div class="col">{{ form_row(filter_form.caracteristiques, {'attr': {'class': 'form-control'}}) }}</div>
             <div class="col">{{ form_row(filter_form.prixUnitaireMin, {'attr': {'class': 'form-control'}}) }}</div>
             <div class="col">{{ form_row(filter_form.prixUnitaireMax, {'attr': {'class': 'form-control'}}) }}</div>
-            <div class="col">
+            <div class="col-auto">
                 <button type="submit" class="btn btn-primary mt-4">Filtrer</button>
             </div>
         </div>
     {{ form_end(filter_form) }}
 
     {% if borniers is empty %}
-        <p class="text-white">Aucun modèle de bornier disponible pour le moment.</p>
+        <p class="text-white">Aucun bornier dans le catalogue pour ce projet.</p>
     {% else %}
         <table class="table table-striped">
             <thead>
@@ -48,14 +52,16 @@
                     <tr>
                         <td>{{ bornier.nom }}</td>
                         <td>{{ bornier.nombreBornes }}</td>
-                        <td>{{ bornier.caracteristiques }}</td>
+                        <td>{{ bornier.caracteristiques|default('N/A') }}</td>
                         <td>{{ bornier.prixUnitaire|number_format(2, '.', ',') }}</td>
                         <td>
-                            <a href="{{ path('catalogue_modele_borniers_edit', {'id': bornier.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
-                            <form method="post" action="{{ path('catalogue_modele_borniers_delete', {'id': bornier.id}) }}" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer ce modèle ?');">
-                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ bornier.id) }}">
-                                <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
-                            </form>
+                            {% if is_granted('CAN_EDIT_CABLES', projet) %}
+                                <a href="{{ path('catalogue_projet_borniers_edit', {'id': bornier.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                                <form method="post" action="{{ path('catalogue_projet_borniers_delete', {'id': bornier.id}) }}" style="display:inline;" onsubmit="return confirm('Supprimer ce bornier du catalogue ?');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ bornier.id) }}">
+                                    <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+                                </form>
+                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}

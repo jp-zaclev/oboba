@@ -10,7 +10,6 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Doctrine\ORM\EntityRepository;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
-
 class CableType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
@@ -28,11 +27,10 @@ class CableType extends AbstractType
                 'placeholder' => 'Choisir une référence',
                 'query_builder' => function (EntityRepository $er) use ($projetId) {
                     return $er->createQueryBuilder('c')
-                        ->where('c.idProjet = :projet')
+                        ->where('c.projet = :projet') // Correction : 'projet' au lieu de 'idProjet'
                         ->setParameter('projet', $projetId);
                 },
-               'constraints' => [new NotBlank(['message' => 'Vous devez sélectionner une référence'])]
-
+                'constraints' => [new NotBlank(['message' => 'Vous devez sélectionner une référence'])]
             ]);
     }
 

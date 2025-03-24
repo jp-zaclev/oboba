@@ -1,10 +1,12 @@
 {# templates/cable/list.html.twig #}
-{% extends 'base.html.twig' %}
+{% extends 'layout/project_layout.html.twig' %}
+
+{% set container_margin = false %} {# Pas de mt-4 ici #}
 
 {% block title %}Liste des câbles - {{ projet.nom }}{% endblock %}
 
-{% block body %}
-    <h1>Liste des câbles pour {{ projet.nom }}</h1>
+{% block page_content %}
+    <h1 class="text-white">Liste des câbles pour {{ projet.nom }}</h1>
 
     <div class="mb-3">
         <div class="row g-2">
@@ -25,10 +27,10 @@
 
     {{ form_start(filter_form, {'method': 'GET'}) }}
         <div class="row mb-3">
-            <div class="col">{{ form_row(filter_form.nom) }}</div>
-            <div class="col">{{ form_row(filter_form.longueurMin) }}</div>
-            <div class="col">{{ form_row(filter_form.longueurMax) }}</div>
-            <div class="col">{{ form_row(filter_form.catalogueProjetCables) }}</div>
+            <div class="col">{{ form_row(filter_form.nom, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.longueurMin, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.longueurMax, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.catalogueProjetCables, {'attr': {'class': 'form-control'}}) }}</div>
             <div class="col">
                 <button type="submit" class="btn btn-primary mt-4">Filtrer</button>
             </div>
@@ -36,7 +38,7 @@
     {{ form_end(filter_form) }}
 
     {% if cables is empty %}
-        <p>Aucun câble trouvé pour ce projet.</p>
+        <p class="text-white">Aucun câble trouvé pour ce projet.</p>
     {% else %}
         <table class="table table-striped">
             <thead>
@@ -71,8 +73,4 @@
             {{ knp_pagination_render(cables) }}
         </div>
     {% endif %}
-
-    {% for message in app.flashes('success') %}
-        <div class="alert alert-success">{{ message }}</div>
-    {% endfor %}
 {% endblock %}

@@ -1,20 +1,21 @@
-{% extends 'base.html.twig' %}
+{# templates/projet/assigner_proprietaire.html.twig #}
+{% extends 'layout/project_layout.html.twig' %}
+
+{% set container_margin = false %} {# Pas de mt-4 ici #}
 
 {% block title %}Assigner un propriétaire - {{ projet.nom }} - Oboba{% endblock %}
 
-{% block body %}
-    <div class="d-flex flex-column min-vh-100">
-        <h1>Assigner un propriétaire pour {{ projet.nom }}</h1>
+{% block page_content %}
+    <h1 class="text-white">Assigner un propriétaire pour {{ projet.nom }}</h1>
 
-        {{ form_start(form) }}
-            <div class="mb-3">
-                {{ form_label(form.utilisateur) }}
-                {{ form_widget(form.utilisateur, {'attr': {'class': 'form-select'}}) }}
-            </div>
-            <div class="text-end">
-                <a href="{{ path('projet_list') }}" class="btn btn-secondary me-2">Retour</a>
-                {{ form_widget(form.submit, {'attr': {'class': 'btn btn-primary'}}) }}
-            </div>
-        {{ form_end(form) }}
-    </div>
+    {{ form_start(form) }}
+        <div class="mb-3">
+            {{ form_label(form.utilisateur, null, {'label_attr': {'class': 'text-white'}}) }}
+            {{ form_widget(form.utilisateur, {'attr': {'class': 'form-select'}}) }}
+        </div>
+        <div class="mt-3 text-end">
+            <a href="{{ path('projet_list') }}" class="btn btn-secondary me-2">Retour</a>
+            {{ form_widget(form.submit, {'attr': {'class': 'btn btn-primary'}}) }}
+        </div>
+    {{ form_end(form) }}
 {% endblock %}

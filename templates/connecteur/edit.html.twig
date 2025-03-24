@@ -1,10 +1,12 @@
 {# templates/connecteur/edit.html.twig #}
-{% extends 'base.html.twig' %}
+{% extends 'layout/project_layout.html.twig' %}
+
+{% set container_margin = false %} {# Pas de mt-4 ici #}
 
 {% block title %}Modifier un connecteur - {{ projet.nom }}{% endblock %}
 
-{% block body %}
-    <h1>Modifier le connecteur pour {{ projet.nom }}</h1>
+{% block page_content %}
+    <h1 class="text-white">Modifier le connecteur pour {{ projet.nom }}</h1>
 
     {{ form_start(form) }}
         <div class="mb-3">
@@ -13,12 +15,9 @@
         <div class="mb-3">
             {{ form_row(form.catalogueProjetConnecteurs, {'attr': {'class': 'form-select'}}) }}
         </div>
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <div class="mt-3">
+            <button type="submit" class="btn btn-primary me-2">Enregistrer</button>
+            <a href="{{ path('connecteur_list', {'projetId': projet.id}) }}" class="btn btn-secondary">Retour à la liste</a>
+        </div>
     {{ form_end(form) }}
-
-    <a href="{{ path('connecteur_list', {'projetId': projet.id}) }}" class="btn btn-secondary mt-3">Retour à la liste</a>
-
-    {% for message in app.flashes('error') %}
-        <div class="alert alert-danger mt-3">{{ message }}</div>
-    {% endfor %}
 {% endblock %}

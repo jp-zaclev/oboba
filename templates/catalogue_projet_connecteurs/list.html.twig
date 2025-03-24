@@ -1,18 +1,23 @@
-{# templates/catalogue_modele_connecteurs/list.html.twig #}
+{# templates/catalogue_projet_connecteurs/list.html.twig #}
 {% extends 'layout/project_layout.html.twig' %}
 
-{% set container_margin = false %} {# Pas de mt-4 ici #}
+{% set container_margin = false %}
 
-{% block title %}Catalogue des modèles de connecteurs - Oboba{% endblock %}
+{% block title %}Catalogue des connecteurs - {{ projet.nom }}{% endblock %}
 
 {% block page_content %}
-    <h1 class="text-white">Catalogue des modèles de connecteurs</h1>
+    <h1 class="text-white">Catalogue des connecteurs pour {{ projet.nom }}</h1>
 
     <div class="mb-3">
         <div class="row g-2">
             <div class="col-auto">
-                <a href="{{ path('catalogue_modele_connecteurs_new') }}" class="btn btn-primary">Ajouter un modèle de connecteur</a>
+                <a href="{{ path('projet_show', {'id': projet.id}) }}" class="btn btn-secondary">Retour à {{ projet.nom }}</a>
             </div>
+            {% if is_granted('CAN_EDIT_CABLES', projet) %}
+                <div class="col-auto">
+                    <a href="{{ path('catalogue_projet_connecteurs_new', {'projetId': projet.id}) }}" class="btn btn-primary">Ajouter un connecteur</a>
+                </div>
+            {% endif %}
         </div>
     </div>
 
@@ -20,18 +25,17 @@
         <div class="row mb-3">
             <div class="col">{{ form_row(filter_form.nom, {'attr': {'class': 'form-control'}}) }}</div>
             <div class="col">{{ form_row(filter_form.type, {'attr': {'class': 'form-control'}}) }}</div>
-            <div class="col">{{ form_row(filter_form.nombreContactsMin, {'attr': {'class': 'form-control'}}) }}</div>
-            <div class="col">{{ form_row(filter_form.nombreContactsMax, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.nombreContacts, {'attr': {'class': 'form-control'}}) }}</div>
             <div class="col">{{ form_row(filter_form.prixUnitaireMin, {'attr': {'class': 'form-control'}}) }}</div>
             <div class="col">{{ form_row(filter_form.prixUnitaireMax, {'attr': {'class': 'form-control'}}) }}</div>
-            <div class="col">
+            <div class="col-auto">
                 <button type="submit" class="btn btn-primary mt-4">Filtrer</button>
             </div>
         </div>
     {{ form_end(filter_form) }}
 
     {% if connecteurs is empty %}
-        <p class="text-white">Aucun modèle de connecteur disponible pour le moment.</p>
+        <p class="text-white">Aucun connecteur dans le catalogue pour ce projet.</p>
     {% else %}
         <table class="table table-striped">
             <thead>
@@ -51,11 +55,13 @@
                         <td>{{ connecteur.nombreContacts }}</td>
                         <td>{{ connecteur.prixUnitaire|number_format(2, '.', ',') }}</td>
                         <td>
-                            <a href="{{ path('catalogue_modele_connecteurs_edit', {'id': connecteur.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
-                            <form method="post" action="{{ path('catalogue_modele_connecteurs_delete', {'id': connecteur.id}) }}" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer ce modèle ?');">
-                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ connecteur.id) }}">
-                                <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
-                            </form>
+                            {% if is_granted('CAN_EDIT_CABLES', projet) %}
+                                <a href="{{ path('catalogue_projet_connecteurs_edit', {'id': connecteur.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                                <form method="post" action="{{ path('catalogue_projet_connecteurs_delete', {'id': connecteur.id}) }}" style="display:inline;" onsubmit="return confirm('Supprimer ce connecteur du catalogue ?');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ connecteur.id) }}">
+                                    <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+                                </form>
+                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}

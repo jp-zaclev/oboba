@@ -1,13 +1,16 @@
-{% extends 'base.html.twig' %}
+{# templates/projet/list.html.twig #}
+{% extends 'layout/project_layout.html.twig' %}
+
+{% set container_margin = false %} {# Pas de mt-4 ici #}
 
 {% block title %}Liste des projets{% endblock %}
 
-{% block body %}
-    <h1>Liste des projets</h1>
+{% block page_content %}
+    <h1 class="text-white">Liste des projets</h1>
     <a href="{{ path('projet_new') }}" class="btn btn-primary mb-3">Ajouter un projet</a>
 
     {% if projets is empty %}
-        <p>Aucun projet trouvé.</p>
+        <p class="text-white">Aucun projet trouvé.</p>
     {% else %}
         <table class="table table-striped">
             <thead>
@@ -49,8 +52,4 @@
             {{ knp_pagination_render(projets) }}
         </div>
     {% endif %}
-
-    {% for message in app.flashes('success') %}
-        <div class="alert alert-success mt-3">{{ message }}</div>
-    {% endfor %}
 {% endblock %}

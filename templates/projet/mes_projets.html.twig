@@ -1,57 +1,45 @@
-{# templates/projet/mes_projets.html.twig (ou le nom de votre template) #}
-{% extends 'base.html.twig' %}
+{# templates/projet/mes_projets.html.twig #}
+{% extends 'layout/project_layout.html.twig' %}
+
+{% set container_margin = false %} {# Pas de mt-4 ici #}
 
 {% block title %}Mes projets{% endblock %}
 
-{% block body %}
-    <div class="hero-section">
-        <div class="background-gradient">
-            <div class="gradient-top"></div>
-            <div class="gradient-bottom"></div>
-        </div>
-        <div class="content">
-            <div class="container">
-                <h1 class="text-white">Mes projets</h1>
+{% block page_content %}
+    <h1 class="text-white">Mes projets</h1>
 
-                <a href="{{ path('projet_mes_projets_new') }}" class="btn btn-success mb-3">Créer un projet</a>
+    <a href="{{ path('projet_mes_projets_new') }}" class="btn btn-success mb-3">Créer un projet</a>
 
-                {% if projets is empty %}
-                    <p class="text-white">Aucun projet associé à votre compte.</p>
-                {% else %}
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>{{ knp_pagination_sortable(projets, 'Nom', 'p.nom') }}</th>
-                                <th>Rôle</th>
-                                <th>{{ knp_pagination_sortable(projets, 'Date de création', 'p.dateHeureCreation') }}</th>
-                                <th>{{ knp_pagination_sortable(projets, 'Dernière modification', 'p.dateHeureDerniereModification') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for projet in projets %}
-                                <tr>
-                                    <td><a href="{{ path('projet_show', {'id': projet.id}) }}">{{ projet.nom }}</a></td>
-                                    <td>
-                                        {% for pu in projet.projetUtilisateurs|filter(pu => pu.utilisateur == app.user) %}
-                                            {{ pu.role|capitalize }}
-                                        {% endfor %}
-                                    </td>
-                                    <td>{{ projet.dateHeureCreation|date('d/m/Y H:i') }}</td>
-                                    <td>{{ projet.dateHeureDerniereModification|date('d/m/Y H:i') }}</td>
-                                </tr>
+    {% if projets is empty %}
+        <p class="text-white">Aucun projet associé à votre compte.</p>
+    {% else %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>{{ knp_pagination_sortable(projets, 'Nom', 'p.nom') }}</th>
+                    <th>Rôle</th>
+                    <th>{{ knp_pagination_sortable(projets, 'Date de création', 'p.dateHeureCreation') }}</th>
+                    <th>{{ knp_pagination_sortable(projets, 'Dernière modification', 'p.dateHeureDerniereModification') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for projet in projets %}
+                    <tr>
+                        <td><a href="{{ path('projet_show', {'id': projet.id}) }}">{{ projet.nom }}</a></td>
+                        <td>
+                            {% for pu in projet.projetUtilisateurs|filter(pu => pu.utilisateur == app.user) %}
+                                {{ pu.role|capitalize }}
                             {% endfor %}
-                        </tbody>
-                    </table>
-
-                    <div class="navigation">
-                        {{ knp_pagination_render(projets) }}
-                    </div>
-                {% endif %}
-
-                {% for message in app.flashes('success') %}
-                    <div class="alert alert-success mt-3">{{ message }}</div>
+                        </td>
+                        <td>{{ projet.dateHeureCreation|date('d/m/Y H:i') }}</td>
+                        <td>{{ projet.dateHeureDerniereModification|date('d/m/Y H:i') }}</td>
+                    </tr>
                 {% endfor %}
-            </div>
+            </tbody>
+        </table>
+
+        <div class="navigation">
+            {{ knp_pagination_render(projets) }}
         </div>
-    </div>
+    {% endif %}
 {% endblock %}

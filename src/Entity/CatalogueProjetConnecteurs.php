@@ -26,7 +26,7 @@ class CatalogueProjetConnecteurs
     private string $type;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: false)]
-    private float $prixUnitaire;
+    private float $prixUnitaire = 0.00;
 
     // Getters et Setters
     public function getId(): ?int

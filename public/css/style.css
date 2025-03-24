@@ -1,5 +1,34 @@
 /* public/css/style.css */
 
+/* Styles pour la page d'accueil */
+.home-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 60px); /* Ajusté pour la navbar */
+    text-align: center;
+    padding: 20px;
+}
+
+.logo {
+    max-width: 300px; /* Ajuste selon la taille de ton logo */
+    margin-bottom: 40px;
+}
+
+.home-container .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    padding: 10px 20px;
+    font-size: 1.25rem;
+}
+
+.home-container .btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+
 /* Fond global noir */
 body {
     background-color: #000;
@@ -178,3 +207,4 @@ div.hero-section div.content div.container table.table.table-striped a:hover {
     color: #fff;
     background-color: #333;
 }
+

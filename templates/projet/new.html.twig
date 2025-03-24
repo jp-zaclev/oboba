@@ -1,17 +1,19 @@
-{# templates/projet/new.html.twig #}
-{% extends 'base.html.twig' %}
+{# templates/projet/new.html.twig (Admin) #}
+{% extends 'layout/project_layout.html.twig' %}
+
+{% set container_margin = false %} {# Pas de mt-4 ici #}
 
 {% block title %}Nouveau projet (Admin) - Oboba{% endblock %}
 
-{% block body %}
-    <h1>Nouveau projet (Admin)</h1>
+{% block page_content %}
+    <h1 class="text-white">Nouveau projet (Admin)</h1>
 
     <form method="post" action="{{ path('projet_new') }}">
         {{ form_start(form) }}
             {{ form_row(form.nom) }}
 
             <div class="mb-3">
-                <label for="proprietaire" class="form-label">Propriétaire</label>
+                <label for="proprietaire" class="form-label text-white">Propriétaire</label>
                 <select name="proprietaire" id="proprietaire" class="form-select" required>
                     {% for utilisateur in utilisateurs %}
                         <option value="{{ utilisateur.id }}">{{ utilisateur.nom }}</option>
@@ -20,28 +22,29 @@
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Concepteurs</label>
+                <label class="form-label text-white">Concepteurs</label>
                 {% for utilisateur in utilisateurs %}
                     <div class="form-check">
                         <input type="checkbox" name="concepteurs[]" value="{{ utilisateur.id }}" id="concepteur_{{ utilisateur.id }}" class="form-check-input">
-                        <label for="concepteur_{{ utilisateur.id }}" class="form-check-label">{{ utilisateur.nom }}</label>
+                        <label for="concepteur_{{ utilisateur.id }}" class="form-check-label text-white">{{ utilisateur.nom }}</label>
                     </div>
                 {% endfor %}
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Lecteurs</label>
+                <label class="form-label text-white">Lecteurs</label>
                 {% for utilisateur in utilisateurs %}
                     <div class="form-check">
                         <input type="checkbox" name="lecteurs[]" value="{{ utilisateur.id }}" id="lecteur_{{ utilisateur.id }}" class="form-check-input">
-                        <label for="lecteur_{{ utilisateur.id }}" class="form-check-label">{{ utilisateur.nom }}</label>
+                        <label for="lecteur_{{ utilisateur.id }}" class="form-check-label text-white">{{ utilisateur.nom }}</label>
                     </div>
                 {% endfor %}
             </div>
 
-            <button type="submit" class="btn btn-primary">Créer</button>
+            <div class="mt-3">
+                <button type="submit" class="btn btn-primary me-2">Créer</button>
+                <a href="{{ path('projet_list') }}" class="btn btn-secondary">Retour à la liste</a>
+            </div>
         {{ form_end(form) }}
     </form>
-
-    <a href="{{ path('projet_list') }}" class="btn btn-secondary mt-3">Retour à la liste</a>
 {% endblock %}

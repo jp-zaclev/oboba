@@ -1,19 +1,26 @@
 {# templates/cable/new.html.twig #}
-{% extends 'base.html.twig' %}
+{% extends 'layout/project_layout.html.twig' %}
+
+{% set container_margin = false %} {# Pas de mt-4 ici #}
 
 {% block title %}Ajouter un câble - {{ projet.nom }}{% endblock %}
 
-{% block body %}
-    <h1>Ajouter un câble pour {{ projet.nom }}</h1>
+{% block page_content %}
+    <h1 class="text-white">Ajouter un câble pour {{ projet.nom }}</h1>
 
     {{ form_start(form) }}
-        {{ form_widget(form) }}
-        <button type="submit" class="btn btn-primary">Ajouter</button>
+        <div class="mb-3">
+            {{ form_row(form.nom, {'attr': {'class': 'form-control w-25'}}) }}
+        </div>
+        <div class="mb-3">
+            {{ form_row(form.longueur, {'attr': {'class': 'form-control w-25'}}) }}
+        </div>
+        <div class="mb-3">
+            {{ form_row(form.catalogueProjetCables, {'attr': {'class': 'form-control w-25'}}) }}
+        </div>
+        <div class="mt-3">
+            <button type="submit" class="btn btn-primary me-2">Ajouter</button>
+            <a href="{{ path('cable_list', {'projetId': projet.id}) }}" class="btn btn-secondary">Retour à la liste</a>
+        </div>
     {{ form_end(form) }}
-
-    <a href="{{ path('cable_list', {'projetId': projet.id}) }}" class="btn btn-secondary mt-3">Retour à la liste</a>
-
-    {% for message in app.flashes('error') %}
-        <div class="alert alert-danger mt-3">{{ message }}</div>
-    {% endfor %}
 {% endblock %}

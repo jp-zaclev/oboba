@@ -1,8 +1,12 @@
 {# templates/security/login.html.twig #}
-{% extends 'base.html.twig' %}
+{% extends 'layout/project_layout.html.twig' %}
 
-{% block body %}
-    <h1>Connexion à Oboba</h1>
+{% set container_margin = false %} {# Pas de mt-4 ici #}
+
+{% block title %}Connexion - Oboba{% endblock %}
+
+{% block page_content %}
+    <h1 class="text-white">Connexion à Oboba</h1>
 
     {% if error %}
         <div class="alert alert-danger">
@@ -12,14 +16,16 @@
 
     <form method="post" class="mt-3">
         <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
+            <label for="email" class="form-label text-white">Email</label>
             <input type="email" name="_username" id="email" class="form-control" value="{{ last_username }}" required autofocus>
         </div>
         <div class="mb-3">
-            <label for="password" class="form-label">Mot de passe</label>
+            <label for="password" class="form-label text-white">Mot de passe</label>
             <input type="password" name="_password" id="password" class="form-control" required>
         </div>
         <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
-        <button type="submit" class="btn btn-primary">Se connecter</button>
+        <div class="mt-3">
+            <button type="submit" class="btn btn-primary">Se connecter</button>
+        </div>
     </form>
 {% endblock %}

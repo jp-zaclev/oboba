@@ -47,7 +47,7 @@ class CatalogueModeleConnecteursType extends AbstractType
                     new NotBlank(['message' => 'Le prix est requis']),
                     new PositiveOrZero(['message' => 'Le prix doit être positif ou zéro']),
                 ],
-                'attr' => ['step' => '0.01', 'placeholder' => 'Ex: 2.50'],
+                'attr' => ['step' => '0.01'],
             ]);
     }
 

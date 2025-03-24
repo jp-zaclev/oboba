@@ -1,12 +1,12 @@
-{# templates/catalogue_modele_cables/edit.html.twig #}
+{# templates/catalogue_projet_cables/new.html.twig #}
 {% extends 'layout/project_layout.html.twig' %}
 
-{% set container_margin = false %} {# Pas de mt-4 ici #}
+{% set container_margin = false %}
 
-{% block title %}Modifier {{ catalogue.nom }} - Oboba{% endblock %}
+{% block title %}Ajouter un type de câble au catalogue - {{ projet.nom }}{% endblock %}
 
 {% block page_content %}
-    <h1 class="text-white">Modifier {{ catalogue.nom }}</h1>
+    <h1 class="text-white">Ajouter un câble au catalogue pour {{ projet.nom }}</h1>
 
     {{ form_start(form) }}
         <div class="mb-3">
@@ -22,8 +22,8 @@
             {{ form_row(form.prixUnitaire, {'attr': {'class': 'form-control w-25'}}) }}
         </div>
         <div class="mt-3">
-            <button type="submit" class="btn btn-primary me-2">Enregistrer</button>
-            <a href="{{ path('catalogue_modele_cables_list') }}" class="btn btn-secondary">Retour à la liste</a>
+            <button type="submit" class="btn btn-primary me-2">Ajouter</button>
+            <a href="{{ path('catalogue_projet_cables_list', {'projetId': projet.id}) }}" class="btn btn-secondary">Retour à la liste</a>
         </div>
     {{ form_end(form) }}
 {% endblock %}

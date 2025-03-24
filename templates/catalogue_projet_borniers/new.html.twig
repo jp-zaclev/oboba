@@ -1,29 +1,29 @@
-{# templates/catalogue_modele_connecteurs/new.html.twig #}
+{# templates/catalogue_projet_borniers/new.html.twig #}
 {% extends 'layout/project_layout.html.twig' %}
 
-{% set container_margin = false %} {# Pas de mt-4 ici #}
+{% set container_margin = false %}
 
-{% block title %}Ajouter un modèle de connecteur - Oboba{% endblock %}
+{% block title %}Ajouter un bornier au catalogue - {{ projet.nom }}{% endblock %}
 
 {% block page_content %}
-    <h1 class="text-white">Ajouter un modèle de connecteur</h1>
+    <h1 class="text-white">Ajouter un bornier au catalogue pour {{ projet.nom }}</h1>
 
     {{ form_start(form) }}
         <div class="mb-3">
             {{ form_row(form.nom, {'attr': {'class': 'form-control w-25'}}) }}
         </div>
         <div class="mb-3">
-            {{ form_row(form.type, {'attr': {'class': 'form-control w-25'}}) }}
+            {{ form_row(form.nombreBornes, {'attr': {'class': 'form-control w-25'}}) }}
         </div>
         <div class="mb-3">
-            {{ form_row(form.nombreContacts, {'attr': {'class': 'form-control w-25'}}) }}
+            {{ form_row(form.caracteristiques, {'attr': {'class': 'form-control w-25'}}) }}
         </div>
         <div class="mb-3">
             {{ form_row(form.prixUnitaire, {'attr': {'class': 'form-control w-25'}}) }}
         </div>
         <div class="mt-3">
             <button type="submit" class="btn btn-primary me-2">Ajouter</button>
-            <a href="{{ path('catalogue_modele_connecteurs_list') }}" class="btn btn-secondary">Retour à la liste</a>
+            <a href="{{ path('catalogue_projet_borniers_list', {'projetId': projet.id}) }}" class="btn btn-secondary">Retour à la liste</a>
         </div>
     {{ form_end(form) }}
 {% endblock %}

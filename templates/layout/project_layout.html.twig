@@ -1,0 +1,24 @@
+{# templates/layout/project_layout.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block body_wrapper %}
+    <div class="hero-section">
+        <div class="background-gradient">
+            <div class="gradient-top"></div>
+            <div class="gradient-bottom"></div>
+        </div>
+        <div class="content">
+            <div class="container{% if container_margin is defined and container_margin %} mt-4{% endif %}">
+                {% for label, messages in app.flashes %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+                {% block page_content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
