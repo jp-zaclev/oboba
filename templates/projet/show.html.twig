@@ -34,6 +34,7 @@
             <a href="{{ path('catalogue_projet_cables_list', {'projetId': projet.id}) }}" class="btn btn-primary w-100 mb-2">Catalogue des câbles</a>
 <a href="{{ path('catalogue_projet_connecteurs_list', {'projetId': projet.id}) }}" class="btn btn-primary w-100 mb-2">Catalogue des connecteurs</a>
             <a href="{{ path('catalogue_projet_borniers_list', {'projetId': projet.id}) }}" class="btn btn-primary w-100 mb-2">Catalogue des borniers</a>
+	    <a href="{{ path('projet_export_xml', {'id': projet.id}) }}" class="btn btn-success w-100 mb-2">Exporter en XML</a>
         </div>
     </div>
 

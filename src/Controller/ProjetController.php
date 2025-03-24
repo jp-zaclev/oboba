@@ -439,4 +439,71 @@ class ProjetController extends AbstractController
 	    }
 	}
 
+	#[Route('/{id}/export-xml', name: 'projet_export_xml', methods: ['GET'])]
+	public function exportToXml(Projet $projet, EntityManagerInterface $em): Response
+	{
+	    $utilisateur = $this->getUser();
+	    if (!$utilisateur) {
+		return $this->redirectToRoute('login');
+	    }
+
+	    // Vérification des autorisations
+	    $isAuthorized = $projet->getProjetUtilisateurs()->exists(function ($key, $pu) use ($utilisateur) {
+		return $pu instanceof ProjetUtilisateur && $pu->getUtilisateur() && $pu->getUtilisateur()->getId() === $utilisateur->getId();
+	    });
+
+	    if (!$isAuthorized) {
+		throw $this->createAccessDeniedException('Vous n’avez pas accès à ce projet.');
+	    }
+
+	    // Création du document XML
+	    $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><projet></projet>');
+	    $xml->addAttribute('id', $projet->getId());
+	    $xml->addChild('nom', htmlspecialchars($projet->getNom()));
+	    $xml->addChild('dateCreation', $projet->getDateHeureDerniereModification()->format('c'));
+
+	    // Export des câbles
+	    $cablesNode = $xml->addChild('catalogueCables');
+	    foreach ($projet->getCatalogueProjetCables() as $cable) {
+		$cableNode = $cablesNode->addChild('cable');
+		$cableNode->addAttribute('id', $cable->getId());
+		$cableNode->addChild('nom', htmlspecialchars($cable->getNom()));
+		$cableNode->addChild('type', htmlspecialchars($cable->getType()));
+		$cableNode->addChild('nombreConducteursMax', $cable->getNombreConducteursMax());
+		$cableNode->addChild('prixUnitaire', number_format($cable->getPrixUnitaire(), 2, '.', ''));
+	    }
+
+	    // Export des connecteurs
+	    $connecteursNode = $xml->addChild('catalogueConnecteurs');
+	    foreach ($projet->getCatalogueProjetConnecteurs() as $connecteur) {
+		$connecteurNode = $connecteursNode->addChild('connecteur');
+		$connecteurNode->addAttribute('id', $connecteur->getId());
+		$connecteurNode->addChild('nom', htmlspecialchars($connecteur->getNom()));
+		$connecteurNode->addChild('type', htmlspecialchars($connecteur->getType()));
+		$connecteurNode->addChild('nombreContacts', $connecteur->getNombreContacts());
+		$connecteurNode->addChild('prixUnitaire', number_format($connecteur->getPrixUnitaire(), 2, '.', ''));
+	    }
+
+	    // Export des borniers
+	    $borniersNode = $xml->addChild('catalogueBorniers');
+	    foreach ($projet->getCatalogueProjetBorniers() as $bornier) {
+		$bornierNode = $borniersNode->addChild('bornier');
+		$bornierNode->addAttribute('id', $bornier->getId());
+		$bornierNode->addChild('nom', htmlspecialchars($bornier->getNom()));
+		$bornierNode->addChild('nombreBornes', $bornier->getNombreBornes());
+		$bornierNode->addChild('caracteristiques', htmlspecialchars($bornier->getCaracteristiques() ?? ''));
+		$bornierNode->addChild('prixUnitaire', number_format($bornier->getPrixUnitaire(), 2, '.', ''));
+	    }
+
+	    // Génération du contenu XML
+	    $xmlContent = $xml->asXML();
+
+	    // Réponse avec fichier téléchargeable
+	    $response = new Response($xmlContent);
+	    $response->headers->set('Content-Type', 'application/xml');
+	    $response->headers->set('Content-Disposition', 'attachment; filename="projet_' . $projet->getId() . '_export.xml"');
+
+	    return $response;
+	}
+
 }
