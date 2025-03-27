@@ -1,9 +1,9 @@
 /*!999999\- enable the sandbox mode */ 
--- MariaDB dump 10.19  Distrib 10.6.18-MariaDB, for debian-linux-gnu (x86_64)
+-- MariaDB dump 10.19  Distrib 10.11.8-MariaDB, for debian-linux-gnu (x86_64)
 --
 -- Host: localhost    Database: oboba
 -- ------------------------------------------------------
--- Server version	10.6.18-MariaDB-0ubuntu0.22.04.1
+-- Server version	10.11.8-MariaDB-0ubuntu0.24.04.1
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -53,13 +53,15 @@ CREATE TABLE `bornier` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `id_catalogue_projet_bornier` int(11) NOT NULL,
   `id_projet` int(11) NOT NULL,
+  `id_localisation` int(11) NOT NULL,
   `nom` varchar(255) NOT NULL,
-  `localisation` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `nom_projet_unique` (`nom`,`id_projet`),
   KEY `IDX_C18B73FFD63520D2` (`id_catalogue_projet_bornier`),
   KEY `IDX_C18B73FF76222944` (`id_projet`),
+  KEY `IDX_C18B73FF9C12BBFD` (`id_localisation`),
   CONSTRAINT `FK_C18B73FF76222944` FOREIGN KEY (`id_projet`) REFERENCES `projet` (`id`),
+  CONSTRAINT `FK_C18B73FF9C12BBFD` FOREIGN KEY (`id_localisation`) REFERENCES `localisation` (`id`),
   CONSTRAINT `FK_C18B73FFD63520D2` FOREIGN KEY (`id_catalogue_projet_bornier`) REFERENCES `catalogue_projet_borniers` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -118,7 +120,7 @@ CREATE TABLE `catalogue_modele_borniers` (
   `prix_unitaire` decimal(10,2) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UNIQ_NOM` (`nom`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -127,7 +129,6 @@ CREATE TABLE `catalogue_modele_borniers` (
 
 LOCK TABLES `catalogue_modele_borniers` WRITE;
 /*!40000 ALTER TABLE `catalogue_modele_borniers` DISABLE KEYS */;
-INSERT INTO `catalogue_modele_borniers` VALUES (1,'Bornier à vis 2P',2,'2.5mm² max',0.80),(2,'Bornier à vis 4P',4,'4mm² max',1.20),(3,'Bornier à vis 6P',6,'6mm² max',1.80),(4,'Bornier à ressort 2P',2,'1.5mm² max',0.90),(5,'Bornier à ressort 4P',4,'2.5mm² max',1.40),(6,'Bornier à ressort 8P',8,'4mm² max',2.50),(7,'Bornier DIN 2P',2,'10mm² max',1.00),(8,'Bornier DIN 4P',4,'16mm² max',1.60),(9,'Bornier DIN 6P',6,'25mm² max',2.20),(10,'Bornier PCB 2P',2,'1mm² max',0.60),(11,'Bornier PCB 3P',3,'1.5mm² max',0.80),(12,'Bornier PCB 5P',5,'2.5mm² max',1.10),(13,'Bornier à levier 2P',2,'4mm² max',1.00),(14,'Bornier à levier 3P',3,'6mm² max',1.30),(15,'Bornier à levier 5P',5,'10mm² max',2.00);
 /*!40000 ALTER TABLE `catalogue_modele_borniers` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -146,7 +147,7 @@ CREATE TABLE `catalogue_modele_cables` (
   `type` varchar(50) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UNIQ_5216F85D6C6E55B5` (`nom`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -155,7 +156,6 @@ CREATE TABLE `catalogue_modele_cables` (
 
 LOCK TABLES `catalogue_modele_cables` WRITE;
 /*!40000 ALTER TABLE `catalogue_modele_cables` DISABLE KEYS */;
-INSERT INTO `catalogue_modele_cables` VALUES (1,'Câble unipolaire H07V-U 1.5mm²',1,0.50,'Unipolaire'),(2,'Câble unipolaire H07V-R 2.5mm²',1,0.75,'Unipolaire'),(3,'Câble unipolaire H07V-K 4.0mm²',1,1.20,'Unipolaire'),(4,'Câble multipaire 2x1.5mm²',2,1.00,'Multipaire'),(5,'Câble multipaire 3x2.5mm²',3,1.80,'Multipaire'),(6,'Câble multipaire 4x1.0mm²',4,2.10,'Multipaire'),(7,'Câble blindé CY 2x0.75mm²',2,1.50,'Blindé'),(8,'Câble blindé CY 4x1.5mm²',4,2.20,'Blindé'),(9,'Câble coaxial RG58',1,1.10,'Coaxial'),(10,'Câble coaxial RG6',1,1.40,'Coaxial'),(11,'Câble réseau UTP Cat5e',8,0.90,'Réseau'),(12,'Câble réseau STP Cat6',8,1.30,'Réseau'),(13,'Câble alimentation 3G2.5mm²',3,2.00,'Alimentation'),(14,'Câble alimentation 5G1.5mm²',5,2.50,'Alimentation'),(15,'Câble fibre optique SM 4FO',4,3.00,'Fibre');
 /*!40000 ALTER TABLE `catalogue_modele_cables` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -174,7 +174,7 @@ CREATE TABLE `catalogue_modele_connecteurs` (
   `prix_unitaire` decimal(10,2) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UNIQ_NOM` (`nom`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -183,7 +183,6 @@ CREATE TABLE `catalogue_modele_connecteurs` (
 
 LOCK TABLES `catalogue_modele_connecteurs` WRITE;
 /*!40000 ALTER TABLE `catalogue_modele_connecteurs` DISABLE KEYS */;
-INSERT INTO `catalogue_modele_connecteurs` VALUES (1,'Connecteur DB9 Mâle',9,'Série',1.50),(2,'Connecteur DB9 Femelle',9,'Série',1.60),(3,'Connecteur DB25 Mâle',25,'Série',2.00),(4,'Connecteur DB25 Femelle',25,'Série',2.10),(5,'Connecteur RJ45 Mâle',8,'Réseau',0.80),(6,'Connecteur RJ45 Femelle',8,'Réseau',0.90),(7,'Connecteur USB-A Mâle',4,'USB',0.70),(8,'Connecteur USB-A Femelle',4,'USB',0.80),(9,'Connecteur Molex Mini-Fit 4P',4,'Molex',1.20),(10,'Connecteur Molex Mini-Fit 6P',6,'Molex',1.50),(11,'Connecteur JST PH 2P',2,'JST',0.50),(12,'Connecteur JST PH 4P',4,'JST',0.70),(13,'Connecteur XLR 3P Mâle',3,'Audio',2.00),(14,'Connecteur XLR 3P Femelle',3,'Audio',2.10),(15,'Connecteur HDMI',19,'Vidéo',2.50);
 /*!40000 ALTER TABLE `catalogue_modele_connecteurs` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -299,10 +298,10 @@ CREATE TABLE `conducteur` (
   KEY `IDX_2367714316801DDF` (`id_contact_destination`),
   KEY `IDX_23677143DF73FC55` (`id_wire_signal`),
   CONSTRAINT `FK_2367714316801DDF` FOREIGN KEY (`id_contact_destination`) REFERENCES `contact` (`id`),
-  CONSTRAINT `FK_23677143523B2018` FOREIGN KEY (`id_wire_signal`) REFERENCES `wire_signal` (`id`),
   CONSTRAINT `FK_236771439A92C5B6` FOREIGN KEY (`id_borne_source`) REFERENCES `borne` (`id`),
   CONSTRAINT `FK_23677143C944263C` FOREIGN KEY (`id_borne_destination`) REFERENCES `borne` (`id`),
   CONSTRAINT `FK_23677143CA6C85E4` FOREIGN KEY (`id_cable`) REFERENCES `cable` (`id`),
+  CONSTRAINT `FK_23677143DF73FC55` FOREIGN KEY (`id_wire_signal`) REFERENCES `wire_signal` (`id`),
   CONSTRAINT `FK_23677143F27EF5F4` FOREIGN KEY (`id_contact_source`) REFERENCES `contact` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -376,6 +375,32 @@ LOCK TABLES `contact` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `doctrine_migration_versions`
+--
+
+DROP TABLE IF EXISTS `doctrine_migration_versions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `doctrine_migration_versions` (
+  `version` varchar(191) NOT NULL,
+  `executed_at` datetime DEFAULT NULL,
+  `execution_time` int(11) DEFAULT NULL,
+  PRIMARY KEY (`version`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `doctrine_migration_versions`
+--
+
+LOCK TABLES `doctrine_migration_versions` WRITE;
+/*!40000 ALTER TABLE `doctrine_migration_versions` DISABLE KEYS */;
+INSERT INTO `doctrine_migration_versions` VALUES
+('DoctrineMigrations\\Version20250327181706','2025-03-27 18:17:45',17171);
+/*!40000 ALTER TABLE `doctrine_migration_versions` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `equipement`
 --
 
@@ -403,6 +428,36 @@ LOCK TABLES `equipement` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `localisation`
+--
+
+DROP TABLE IF EXISTS `localisation`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `localisation` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id_projet` int(11) NOT NULL,
+  `nom` varchar(255) NOT NULL,
+  `x` double DEFAULT NULL,
+  `y` double DEFAULT NULL,
+  `z` double DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `nom_unique` (`nom`),
+  KEY `IDX_BFD3CE8F76222944` (`id_projet`),
+  CONSTRAINT `FK_BFD3CE8F76222944` FOREIGN KEY (`id_projet`) REFERENCES `projet` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `localisation`
+--
+
+LOCK TABLES `localisation` WRITE;
+/*!40000 ALTER TABLE `localisation` DISABLE KEYS */;
+/*!40000 ALTER TABLE `localisation` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `projet`
 --
 
@@ -415,7 +470,7 @@ CREATE TABLE `projet` (
   `date_heure_creation` datetime NOT NULL,
   `date_heure_derniere_modification` datetime NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -424,7 +479,6 @@ CREATE TABLE `projet` (
 
 LOCK TABLES `projet` WRITE;
 /*!40000 ALTER TABLE `projet` DISABLE KEYS */;
-INSERT INTO `projet` VALUES (1,'Test','2025-03-23 13:48:46','2025-03-23 13:48:46');
 /*!40000 ALTER TABLE `projet` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -445,7 +499,7 @@ CREATE TABLE `projet_utilisateur` (
   KEY `IDX_C626378DFB88E14F` (`utilisateur_id`),
   CONSTRAINT `FK_C626378DC18272` FOREIGN KEY (`projet_id`) REFERENCES `projet` (`id`),
   CONSTRAINT `FK_C626378DFB88E14F` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateur` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -454,7 +508,6 @@ CREATE TABLE `projet_utilisateur` (
 
 LOCK TABLES `projet_utilisateur` WRITE;
 /*!40000 ALTER TABLE `projet_utilisateur` DISABLE KEYS */;
-INSERT INTO `projet_utilisateur` VALUES (1,1,3,'proprietaire');
 /*!40000 ALTER TABLE `projet_utilisateur` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -473,7 +526,7 @@ CREATE TABLE `utilisateur` (
   `roles` longtext NOT NULL COMMENT '(DC2Type:json)',
   PRIMARY KEY (`id`),
   UNIQUE KEY `UNIQ_1D1C63B3E7927C74` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -482,7 +535,8 @@ CREATE TABLE `utilisateur` (
 
 LOCK TABLES `utilisateur` WRITE;
 /*!40000 ALTER TABLE `utilisateur` DISABLE KEYS */;
-INSERT INTO `utilisateur` VALUES (3,'Marie Curie','marie.curie@example.com','$2y$13$qaMPeImeONSn.DCpWUWj4e5N1UWg/ccl3.zZdcwfAT1n2VnqZLGOO','[\"ROLE_ADMIN\"]'),(4,'Homer Simpson','h.simpson@example.com','$2y$13$r6qJrZ4z/hT2.NfI0/7PQ.Mwt9d4x4DIA9onOTiaFEdYHsmyJeLrO','[]'),(5,'Paul Martin','paul.martin@example.com','$2y$13$VblUEAtNukaQlkhspNR4pewn6aMeh/k0IH7ibwLOb8v3Taa.l4XUi','[\"ROLE_ADMIN\"]'),(6,'jean dupont','jean.dupont@example.com','$2y$13$Kdoz39gn0GtZsLcq1oMtyuXhRK2QoW5I2BUjmCiM/upnqVbUGjztO','[]');
+INSERT INTO `utilisateur` VALUES
+(1,'admin','admin@example.com','$2y$13$LeyKMKjcsnavjyxppnnC8ODXEXIp5QSiF9gR4D3HlvbrW2gsDSM4y','[\"ROLE_ADMIN\"]');
 /*!40000 ALTER TABLE `utilisateur` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -502,7 +556,7 @@ CREATE TABLE `wire_signal` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `UNIQ_C76131A26C6E55B5` (`nom`),
   KEY `IDX_C76131A276222944` (`id_projet`),
-  CONSTRAINT `FK_740C95F576222944` FOREIGN KEY (`id_projet`) REFERENCES `projet` (`id`)
+  CONSTRAINT `FK_C76131A276222944` FOREIGN KEY (`id_projet`) REFERENCES `projet` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -524,4 +578,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-03-23 18:34:54
+-- Dump completed on 2025-03-27 19:26:01

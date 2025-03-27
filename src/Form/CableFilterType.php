@@ -1,5 +1,4 @@
 <?php
-// src/Form/CableFilterType.php
 namespace App\Form;
 
 use App\Entity\CatalogueProjetCables;
@@ -7,7 +6,6 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
-use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 
 class CableFilterType extends AbstractType
@@ -18,17 +16,12 @@ class CableFilterType extends AbstractType
             ->add('nom', TextType::class, [
                 'label' => 'Nom',
                 'required' => false,
-                'attr' => ['placeholder' => 'Filtrer par nom']
+                'attr' => ['placeholder' => 'Filtrer par nom'],
             ])
-            ->add('longueurMin', IntegerType::class, [
-                'label' => 'Longueur min (m)',
+            ->add('longueur', TextType::class, [
+                'label' => 'Longueur (m)',
                 'required' => false,
-                'attr' => ['placeholder' => 'Longueur minimale']
-            ])
-            ->add('longueurMax', IntegerType::class, [
-                'label' => 'Longueur max (m)',
-                'required' => false,
-                'attr' => ['placeholder' => 'Longueur maximale']
+                'attr' => ['placeholder' => 'Ex: <4, >8, <=32, >=10, 7<12, 5'],
             ])
             ->add('catalogueProjetCables', EntityType::class, [
                 'class' => CatalogueProjetCables::class,
@@ -38,7 +31,7 @@ class CableFilterType extends AbstractType
                 'placeholder' => 'Tous les catalogues',
                 'query_builder' => function (\Doctrine\ORM\EntityRepository $er) use ($options) {
                     return $er->createQueryBuilder('c')
-                        ->where('c.projet = :projet')  // Corrigé : 'projet' au lieu de 'idProjet'
+                        ->where('c.projet = :projet')
                         ->setParameter('projet', $options['projet_id']);
                 },
             ]);
@@ -50,6 +43,7 @@ class CableFilterType extends AbstractType
             'data_class' => null,
             'projet_id' => null,
             'method' => 'GET',
+            'csrf_protection' => false,
         ]);
         $resolver->setRequired('projet_id');
     }

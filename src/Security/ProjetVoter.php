@@ -10,10 +10,17 @@ class ProjetVoter extends Voter
 {
     const CAN_EDIT_CABLES = 'CAN_EDIT_CABLES';
     const CAN_EDIT_CONNECTEURS = 'CAN_EDIT_CONNECTEURS';
+    const CAN_EDIT_BORNIERS = 'CAN_EDIT_BORNIERS';
+    const CAN_EDIT_SIGNALS = 'CAN_EDIT_SIGNALS';
 
     protected function supports(string $attribute, $subject): bool
     {
-        return in_array($attribute, [self::CAN_EDIT_CABLES, self::CAN_EDIT_CONNECTEURS])
+        return in_array($attribute, [
+                self::CAN_EDIT_CABLES,
+                self::CAN_EDIT_CONNECTEURS,
+                self::CAN_EDIT_BORNIERS,
+                self::CAN_EDIT_SIGNALS
+            ])
             && $subject instanceof Projet;
     }
 

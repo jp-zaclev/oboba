@@ -1,0 +1,101 @@
+{# templates/bornier/list.html.twig #}
+{% extends 'layout/project_layout.html.twig' %}
+
+{% set container_margin = false %}
+
+{% block title %}Liste des borniers - {{ projet.nom }}{% endblock %}
+
+{% block page_content %}
+    <h1 class="text-white">Liste des borniers pour {{ projet.nom }}</h1>
+
+    <div class="mb-3">
+        <div class="row g-2">
+            <div class="col-auto">
+                <a href="{{ path('projet_show', {'id': projet.id}) }}" class="btn btn-secondary">Retour à {{ projet.nom }}</a>
+            </div>
+            {% if is_granted('CAN_EDIT_BORNIERS', projet) %}
+                <div class="col-auto">
+                    <a href="{{ path('bornier_new', {'projetId': projet.id}) }}" class="btn btn-primary">Ajouter un bornier</a>
+                </div>
+            {% endif %}
+            <div class="col-auto">
+                <a href="{{ path('bornier_export_csv', {'projetId': projet.id, 'page': app.request.query.get('page', 1)}|merge(app.request.query.all)) }}" class="btn btn-success">Exporter en CSV</a>
+            </div>
+        </div>
+    </div>
+
+    {{ form_start(filter_form, {'method': 'GET'}) }}
+        <div class="row mb-4 g-3 align-items-end">
+            <div class="col-md-2">
+                {{ form_label(filter_form.nom) }}
+                {{ form_widget(filter_form.nom, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(filter_form.nom) }}
+            </div>
+            <div class="col-md-2">
+                {{ form_label(filter_form.catalogueProjetBorniers) }}
+                {{ form_widget(filter_form.catalogueProjetBorniers, {'attr': {'class': 'form-select'}}) }}
+                {{ form_errors(filter_form.catalogueProjetBorniers) }}
+            </div>
+            <div class="col-md-2">
+                {{ form_label(filter_form.nombreBornes) }}
+                {{ form_widget(filter_form.nombreBornes, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(filter_form.nombreBornes) }}
+            </div>
+            <div class="col-md-2">
+                {{ form_label(filter_form.caracteristiques) }}
+                {{ form_widget(filter_form.caracteristiques, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(filter_form.caracteristiques) }}
+            </div>
+            <div class="col-md-2">
+                {{ form_label(filter_form.localisation) }}
+                {{ form_widget(filter_form.localisation, {'attr': {'class': 'form-select'}}) }}
+                {{ form_errors(filter_form.localisation) }}
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary me-2">Filtrer</button>
+                <a href="{{ path('bornier_list', {'projetId': projet.id}) }}" class="btn btn-secondary">Réinitialiser</a>
+            </div>
+        </div>
+    {{ form_end(filter_form) }}
+
+    {% if borniers is empty %}
+        <p class="text-white">Aucun bornier trouvé pour ce projet.</p>
+    {% else %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th class="col-md-2">{{ knp_pagination_sortable(borniers, 'Nom', 'b.nom') }}</th>
+                    <th class="col-md-2">{{ knp_pagination_sortable(borniers, 'Catalogue', 'cat.nom') }}</th>
+                    <th class="col-md-2">{{ knp_pagination_sortable(borniers, 'Nombre de bornes', 'cat.nombreBornes') }}</th>
+                    <th class="col-md-2">{{ knp_pagination_sortable(borniers, 'Caractéristiques', 'cat.caracteristiques') }}</th>
+                    <th class="col-md-2">{{ knp_pagination_sortable(borniers, 'Emplacement', 'loc.nom') }}</th>
+                    <th class="col-md-2">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bornier in borniers %}
+                    <tr>
+                        <td>{{ bornier.nom }}</td>
+                        <td>{{ bornier.catalogueProjetBorniers ? bornier.catalogueProjetBorniers.nom : 'N/A' }}</td>
+                        <td>{{ bornier.catalogueProjetBorniers ? bornier.catalogueProjetBorniers.nombreBornes : 'N/A' }}</td>
+                        <td>{{ bornier.catalogueProjetBorniers ? bornier.catalogueProjetBorniers.caracteristiques : 'N/A' }}</td>
+                        <td>{{ bornier.localisation ? bornier.localisation.nom : 'N/A' }}</td>
+                        <td>
+                            {% if is_granted('CAN_EDIT_BORNIERS', projet) %}
+                                <a href="{{ path('bornier_edit', {'projetId': projet.id, 'id': bornier.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                                <form method="post" action="{{ path('bornier_delete', {'projetId': projet.id, 'id': bornier.id}) }}" style="display:inline;" onsubmit="return confirm('Supprimer ce bornier ?');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ bornier.id) }}">
+                                    <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="navigation">
+            {{ knp_pagination_render(borniers) }}
+        </div>
+    {% endif %}
+{% endblock %}

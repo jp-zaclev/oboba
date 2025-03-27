@@ -1,0 +1,15 @@
+{% extends 'layout/project_layout.html.twig' %}
+{% set container_margin = false %}
+{% block title %}Ajouter une localisation - {{ projet.nom }}{% endblock %}
+
+{% block page_content %}
+    <h1 class="text-white">Ajouter une localisation pour {{ projet.nom }}</h1>
+
+    {{ form_start(form) }}
+        {{ form_widget(form) }}
+        <div class="mt-3">
+            <button type="submit" class="btn btn-primary me-2">Ajouter</button>
+            <a href="{{ path('localisation_list', {'projetId': projet.id}) }}" class="btn btn-secondary">Retour à la liste</a>
+        </div>
+    {{ form_end(form) }}
+{% endblock %}

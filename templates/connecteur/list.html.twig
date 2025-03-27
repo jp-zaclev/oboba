@@ -26,13 +26,30 @@
     </div>
 
     {{ form_start(filter_form, {'method': 'GET'}) }}
-        <div class="row mb-3">
-            <div class="col">{{ form_row(filter_form.nom) }}</div>
-            <div class="col">{{ form_row(filter_form.nombreContacts) }}</div>
-            <div class="col">{{ form_row(filter_form.type) }}</div>
-            <div class="col">{{ form_row(filter_form.catalogueProjetConnecteurs) }}</div>
-            <div class="col">
-                <button type="submit" class="btn btn-primary mt-4">Filtrer</button>
+        <div class="row mb-4 g-3 align-items-end">
+            <div class="col-md-2">
+                {{ form_label(filter_form.nom) }}
+                {{ form_widget(filter_form.nom, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(filter_form.nom) }}
+            </div>
+            <div class="col-md-2">
+                {{ form_label(filter_form.catalogueProjetConnecteurs) }}
+                {{ form_widget(filter_form.catalogueProjetConnecteurs, {'attr': {'class': 'form-select'}}) }}
+                {{ form_errors(filter_form.catalogueProjetConnecteurs) }}
+            </div>
+            <div class="col-md-2">
+                {{ form_label(filter_form.nombreContacts) }}
+                {{ form_widget(filter_form.nombreContacts, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(filter_form.nombreContacts) }}
+            </div>
+            <div class="col-md-2">
+                {{ form_label(filter_form.type) }}
+                {{ form_widget(filter_form.type, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(filter_form.type) }}
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary me-2">Filtrer</button>
+                <a href="{{ path('connecteur_list', {'projetId': projet.id}) }}" class="btn btn-secondary">Réinitialiser</a>
             </div>
         </div>
     {{ form_end(filter_form) }}
@@ -43,11 +60,11 @@
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>{{ knp_pagination_sortable(connecteurs, 'Nom', 'c.nom') }}</th>
-                    <th>{{ knp_pagination_sortable(connecteurs, 'Catalogue', 'cat.nom') }}</th>
-                    <th>{{ knp_pagination_sortable(connecteurs, 'Nombre de contacts', 'cat.nombreContacts') }}</th>
-                    <th>{{ knp_pagination_sortable(connecteurs, 'Type', 'cat.type') }}</th>
-                    <th>Actions</th>
+                    <th class="col-md-2">{{ knp_pagination_sortable(connecteurs, 'Nom', 'c.nom') }}</th>
+                    <th class="col-md-2">{{ knp_pagination_sortable(connecteurs, 'Catalogue', 'cat.nom') }}</th>
+                    <th class="col-md-2">{{ knp_pagination_sortable(connecteurs, 'Nombre de contacts', 'cat.nombreContacts') }}</th>
+                    <th class="col-md-2">{{ knp_pagination_sortable(connecteurs, 'Type', 'cat.type') }}</th>
+                    <th class="col-md-4">Actions</th>
                 </tr>
             </thead>
             <tbody>

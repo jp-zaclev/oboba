@@ -1,7 +1,6 @@
-{# templates/projet/list.html.twig #}
 {% extends 'layout/project_layout.html.twig' %}
 
-{% set container_margin = false %} {# Pas de mt-4 ici #}
+{% set container_margin = false %}
 
 {% block title %}Liste des projets{% endblock %}
 
@@ -12,44 +11,99 @@
     {% if projets is empty %}
         <p class="text-white">Aucun projet trouvé.</p>
     {% else %}
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>{{ knp_pagination_sortable(projets, 'Nom', 'p.nom') }}</th>
-                    <th>{{ knp_pagination_sortable(projets, 'Date de création', 'p.dateHeureCreation') }}</th>
-                    <th>{{ knp_pagination_sortable(projets, 'Dernière modification', 'p.dateHeureDerniereModification') }}</th>
-                    <th>Propriétaire</th> {# Tri complexe, voir note ci-dessous #}
-                    <th>Concepteurs</th> {# Tri complexe, voir note ci-dessous #}
-                    <th>Lecteurs</th> {# Tri complexe, voir note ci-dessous #}
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for projet in projets %}
-                    <tr {% if not projet.proprietaire %}class="table-warning"{% endif %}>
-                        <td>{{ projet.nom }}</td>
-                        <td>{{ projet.dateHeureCreation|date('d/m/Y H:i') }}</td>
-                        <td>{{ projet.dateHeureDerniereModification|date('d/m/Y H:i') }}</td>
-                        <td>{{ projet.proprietaires|map(p => p.nom)|join(', ') ?: '-' }}</td>
-                        <td>{{ projet.concepteurs|map(c => c.nom)|join(', ') }}</td>
-                        <td>{{ projet.lecteurs|map(l => l.nom)|join(', ') }}</td>
-                        <td>
-                            <a href="{{ path('projet_edit', {'id': projet.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
-                            <form method="post" action="{{ path('projet_delete', {'id': projet.id}) }}" style="display:inline;" onsubmit="return confirm('Confirmer la suppression ?');">
-                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ projet.id) }}">
-                                <button class="btn btn-sm btn-danger">Supprimer</button>
-                            </form>
-                            {% if is_granted('ROLE_ADMIN') %}
-                                <a href="{{ path('projet_assigner_proprietaire', {'id': projet.id}) }}" class="btn btn-sm btn-info mt-1">Assigner un propriétaire</a>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <form method="post" id="delete-form" onsubmit="return confirm('Voulez-vous vraiment supprimer les projets sélectionnés ?');">
+            <div class="mb-3">
+                <button type="submit" class="btn btn-danger" id="delete-selected" disabled>Effacer les éléments sélectionnés</button>
+            </div>
 
-        <div class="navigation">
-            {{ knp_pagination_render(projets) }}
-        </div>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="select-all"></th>
+                        <th>{{ knp_pagination_sortable(projets, 'Nom', 'p.nom') }}</th>
+                        <th>{{ knp_pagination_sortable(projets, 'Date de création', 'p.dateHeureCreation') }}</th>
+                        <th>{{ knp_pagination_sortable(projets, 'Dernière modification', 'p.dateHeureDerniereModification') }}</th>
+                        <th>Propriétaire</th>
+                        <th>Concepteurs</th>
+                        <th>Lecteurs</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for projet in projets %}
+                        <tr {% if not projet.proprietaire %}class="table-warning"{% endif %}>
+                            <td>
+                                <input type="checkbox" name="selected_items[]" value="{{ projet.id }}"
+                                       class="select-item" {% if projet.id in selected_ids %}checked{% endif %}>
+                            </td>
+                            <td>{{ projet.nom }}</td>
+                            <td>{{ projet.dateHeureCreation|date('d/m/Y H:i') }}</td>
+                            <td>{{ projet.dateHeureDerniereModification|date('d/m/Y H:i') }}</td>
+                            <td>{{ projet.proprietaires|map(p => p.nom)|join(', ') ?: '-' }}</td>
+                            <td>{{ projet.concepteurs|map(c => c.nom)|join(', ') }}</td>
+                            <td>{{ projet.lecteurs|map(l => l.nom)|join(', ') }}</td>
+                            <td>
+                                <a href="{{ path('projet_edit', {'id': projet.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                                <form method="post" action="{{ path('projet_delete', {'id': projet.id}) }}" style="display:inline;" onsubmit="return confirm('Confirmer la suppression ?');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ projet.id) }}">
+                                    <button class="btn btn-sm btn-danger">Supprimer</button>
+                                </form>
+                                {% if is_granted('ROLE_ADMIN') %}
+                                    <a href="{{ path('projet_assigner_proprietaire', {'id': projet.id}) }}" class="btn btn-sm btn-info mt-1">Assigner un propriétaire</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="navigation">
+                {{ knp_pagination_render(projets) }}
+            </div>
+        </form>
     {% endif %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const selectAll = document.getElementById('select-all');
+            const selectItems = document.querySelectorAll('.select-item');
+            const deleteButton = document.getElementById('delete-selected');
+
+            // Mettre à jour l'état du bouton "Effacer"
+            function updateDeleteButton() {
+                const checkedCount = document.querySelectorAll('.select-item:checked').length;
+                deleteButton.disabled = checkedCount === 0;
+            }
+
+            // Case "Tout sélectionner"
+            selectAll.addEventListener('change', function () {
+                selectItems.forEach(item => {
+                    item.checked = selectAll.checked;
+                    toggleSelection(item);
+                });
+                updateDeleteButton();
+            });
+
+            // Gestion des cases individuelles
+            selectItems.forEach(item => {
+                item.addEventListener('change', function () {
+                    toggleSelection(item);
+                    updateDeleteButton();
+                    selectAll.checked = document.querySelectorAll('.select-item:not(:checked)').length === 0;
+                });
+            });
+
+            // Persistance des sélections via AJAX
+            function toggleSelection(item) {
+                const itemId = item.value;
+                fetch(`{{ path('projet_list') }}?toggle_selection=1&item_id=${itemId}`, {
+                    method: 'GET',
+                }).then(response => response.json())
+                  .then(data => console.log('Sélection mise à jour:', data.selected));
+            }
+
+            // Initialisation
+            updateDeleteButton();
+        });
+    </script>
 {% endblock %}

@@ -1,0 +1,128 @@
+{% extends 'layout/project_layout.html.twig' %}
+
+{% set container_margin = false %}
+
+{% block title %}Liste des signaux - {{ projet.nom }}{% endblock %}
+
+{% block page_content %}
+    <h1 class="text-white">Liste des signaux pour {{ projet.nom }}</h1>
+
+    <div class="mb-3">
+        <div class="row g-2">
+            <div class="col-auto">
+                <a href="{{ path('projet_show', {'id': projet.id}) }}" class="btn btn-secondary">Retour à {{ projet.nom }}</a>
+            </div>
+            {% if is_granted('CAN_EDIT_SIGNALS', projet) %}
+                <div class="col-auto">
+                    <a href="{{ path('wire_signal_new', {'projetId': projet.id}) }}" class="btn btn-primary">Ajouter un signal</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {{ form_start(filter_form, {'method': 'GET'}) }}
+        <div class="row mb-3">
+            <div class="col">{{ form_row(filter_form.nom, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.type, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col">{{ form_row(filter_form.details, {'attr': {'class': 'form-control'}}) }}</div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary mt-4">Filtrer</button>
+            </div>
+        </div>
+    {{ form_end(filter_form) }}
+
+    {% if signaux is empty %}
+        <p class="text-white">Aucun signal dans le catalogue pour ce projet.</p>
+    {% else %}
+        <form method="post" id="delete-form" onsubmit="return confirm('Supprimer les signaux sélectionnés ?');">
+            {% if is_granted('CAN_EDIT_SIGNALS', projet) %}
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-danger" id="delete-selected" disabled>Effacer les signaux sélectionnés</button>
+                </div>
+            {% endif %}
+
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        {% if is_granted('CAN_EDIT_SIGNALS', projet) %}
+                            <th><input type="checkbox" id="select-all"></th>
+                        {% endif %}
+                        <th>{{ knp_pagination_sortable(signaux, 'Nom', 's.nom') }}</th>
+                        <th>{{ knp_pagination_sortable(signaux, 'Type', 's.type') }}</th>
+                        <th>{{ knp_pagination_sortable(signaux, 'Détails', 's.details') }}</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for signal in signaux %}
+                        <tr>
+                            {% if is_granted('CAN_EDIT_SIGNALS', projet) %}
+                                <td>
+                                    <input type="checkbox" name="selected_items[]" value="{{ signal.id }}"
+                                           class="select-item" {% if signal.id in selected_ids %}checked{% endif %}>
+                                </td>
+                            {% endif %}
+                            <td>{{ signal.nom }}</td>
+                            <td>{{ signal.type }}</td>
+                            <td>{{ signal.details|default('N/A') }}</td>
+                            <td>
+                                {% if is_granted('CAN_EDIT_SIGNALS', projet) %}
+                                    <a href="{{ path('wire_signal_edit', {'projetId': projet.id, 'id': signal.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                                    <form method="post" action="{{ path('wire_signal_delete', {'projetId': projet.id, 'id': signal.id}) }}" style="display:inline;" onsubmit="return confirm('Supprimer ce signal du catalogue ?');">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ signal.id) }}">
+                                        <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="navigation">
+                {{ knp_pagination_render(signaux) }}
+            </div>
+        </form>
+    {% endif %}
+
+    {% if is_granted('CAN_EDIT_SIGNALS', projet) %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const selectAll = document.getElementById('select-all');
+                const selectItems = document.querySelectorAll('.select-item');
+                const deleteButton = document.getElementById('delete-selected');
+
+                function updateDeleteButton() {
+                    const checkedCount = document.querySelectorAll('.select-item:checked').length;
+                    deleteButton.disabled = checkedCount === 0;
+                }
+
+                selectAll.addEventListener('change', function () {
+                    selectItems.forEach(item => {
+                        item.checked = selectAll.checked;
+                        toggleSelection(item);
+                    });
+                    updateDeleteButton();
+                });
+
+                selectItems.forEach(item => {
+                    item.addEventListener('change', function () {
+                        toggleSelection(item);
+                        updateDeleteButton();
+                        selectAll.checked = document.querySelectorAll('.select-item:not(:checked)').length === 0;
+                    });
+                });
+
+                function toggleSelection(item) {
+                    const itemId = item.value;
+                    fetch(`{{ path('wire_signal_list', {'projetId': projet.id}) }}?toggle_selection=1&item_id=${itemId}`, {
+                        method: 'GET',
+                    }).then(response => response.json())
+                      .then(data => console.log('Sélection mise à jour:', data.selected));
+                }
+
+                updateDeleteButton();
+            });
+        </script>
+    {% endif %}
+{% endblock %}

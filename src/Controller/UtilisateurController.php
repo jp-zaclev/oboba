@@ -15,10 +15,51 @@ use Knp\Component\Pager\PaginatorInterface;
 
 class UtilisateurController extends AbstractController
 {
-    #[Route('/utilisateurs/gestion', name: 'utilisateurs_gestion')]
+    #[Route('/utilisateurs/gestion', name: 'utilisateurs_gestion', methods: ['GET', 'POST'])]
     public function gestion(EntityManagerInterface $em, Request $request, PaginatorInterface $paginator): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $session = $request->getSession();
+        $selectedIds = $session->get('selected_utilisateurs', []);
+
+        // Gestion des suppressions multiples via POST
+        if ($request->isMethod('POST')) {
+            if (empty($selectedIds)) {
+                $this->addFlash('warning', 'Aucun utilisateur sélectionné pour la suppression.');
+            } else {
+                $itemsToDelete = $em->getRepository(Utilisateur::class)->findBy(['id' => $selectedIds]);
+                if (empty($itemsToDelete)) {
+                    $this->addFlash('error', 'Aucun utilisateur valide trouvé pour la suppression.');
+                } else {
+                    foreach ($itemsToDelete as $utilisateur) {
+                        // Dissocier les ProjetUtilisateur
+                        $projetUtilisateurs = $em->getRepository(ProjetUtilisateur::class)->findBy(['utilisateur' => $utilisateur]);
+                        foreach ($projetUtilisateurs as $pu) {
+                            $pu->setUtilisateur(null); // Met utilisateur_id à NULL
+                            $em->persist($pu);
+                        }
+                        $em->remove($utilisateur);
+                    }
+                    $em->flush();
+                    $this->addFlash('success', 'Utilisateurs sélectionnés supprimés avec succès. Les projets associés sont désormais orphelins.');
+                    $session->set('selected_utilisateurs', []);
+                }
+            }
+            return $this->redirectToRoute('utilisateurs_gestion');
+        }
+
+        // Mise à jour des sélections via GET (AJAX)
+        if ($request->query->has('toggle_selection')) {
+            $itemId = $request->query->get('item_id');
+            if (in_array($itemId, $selectedIds)) {
+                $selectedIds = array_diff($selectedIds, [$itemId]);
+            } else {
+                $selectedIds[] = $itemId;
+            }
+            $session->set('selected_utilisateurs', $selectedIds);
+            return $this->json(['success' => true, 'selected' => $selectedIds]);
+        }
 
         $qb = $em->getRepository(Utilisateur::class)->createQueryBuilder('u');
 
@@ -27,13 +68,14 @@ class UtilisateurController extends AbstractController
             $request->query->getInt('page', 1),
             10,
             [
-                'defaultSortFieldName' => 'u.nom', // Tri par défaut sur le nom
+                'defaultSortFieldName' => 'u.nom',
                 'defaultSortDirection' => 'asc',
             ]
         );
 
         return $this->render('utilisateur/gestion.html.twig', [
             'utilisateurs' => $utilisateurs,
+            'selected_ids' => $selectedIds,
         ]);
     }
 

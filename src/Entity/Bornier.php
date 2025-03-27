@@ -1,11 +1,9 @@
 <?php
 namespace App\Entity;
+
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use App\Entity\Projet;
-use App\Entity\CatalogueProjetBorniers;
-use App\Entity\Borne;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'bornier')]
@@ -22,14 +20,15 @@ class Bornier
 
     #[ORM\ManyToOne(targetEntity: CatalogueProjetBorniers::class)]
     #[ORM\JoinColumn(name: 'id_catalogue_projet_bornier', referencedColumnName: 'id', nullable: false)]
-    private ?CatalogueProjetBorniers $catalogueProjetBornier = null;
+    private ?CatalogueProjetBorniers $catalogueProjetBorniers = null;
 
     #[ORM\ManyToOne(targetEntity: Projet::class, inversedBy: 'borniers')]
     #[ORM\JoinColumn(name: 'id_projet', referencedColumnName: 'id', nullable: false)]
     private ?Projet $projet = null;
 
-    #[ORM\Column(type: 'string', length: 255, nullable: false)]
-    private string $localisation;
+    #[ORM\ManyToOne(targetEntity: Localisation::class)]
+    #[ORM\JoinColumn(name: 'id_localisation', referencedColumnName: 'id', nullable: false)]
+    private ?Localisation $localisation = null;
 
     #[ORM\OneToMany(targetEntity: Borne::class, mappedBy: 'bornier', cascade: ['persist', 'remove'])]
     private Collection $bornes;
@@ -39,7 +38,7 @@ class Bornier
         $this->bornes = new ArrayCollection();
     }
 
-    public function getId(): ?int
+   public function getId(): ?int
     {
         return $this->id;
     }
@@ -55,14 +54,14 @@ class Bornier
         return $this;
     }
 
-    public function getCatalogueProjetBornier(): ?CatalogueProjetBorniers
+    public function getCatalogueProjetBorniers(): ?CatalogueProjetBorniers
     {
-        return $this->catalogueProjetBornier;
+        return $this->catalogueProjetBorniers;
     }
 
-    public function setCatalogueProjetBornier(CatalogueProjetBorniers $catalogue): self
+    public function setCatalogueProjetBorniers(CatalogueProjetBorniers $catalogue): self
     {
-        $this->catalogueProjetBornier = $catalogue;
+        $this->catalogueProjetBorniers = $catalogue;
         return $this;
     }
 
@@ -77,17 +76,16 @@ class Bornier
         return $this;
     }
 
-    public function getLocalisation(): string
+    public function getLocalisation(): ?Localisation
     {
         return $this->localisation;
     }
 
-    public function setLocalisation(string $localisation): self
+    public function setLocalisation(Localisation $localisation): self
     {
         $this->localisation = $localisation;
         return $this;
     }
-
     public function getBornes(): Collection
     {
         return $this->bornes;

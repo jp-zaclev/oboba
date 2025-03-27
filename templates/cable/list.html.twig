@@ -1,7 +1,7 @@
 {# templates/cable/list.html.twig #}
 {% extends 'layout/project_layout.html.twig' %}
 
-{% set container_margin = false %} {# Pas de mt-4 ici #}
+{% set container_margin = false %}
 
 {% block title %}Liste des câbles - {{ projet.nom }}{% endblock %}
 
@@ -10,7 +10,6 @@
 
     <div class="mb-3">
         <div class="row g-2">
-            {# Bouton Retour #}
             <div class="col-auto">
                 <a href="{{ path('projet_show', {'id': projet.id}) }}" class="btn btn-secondary">Retour à {{ projet.nom }}</a>
             </div>
@@ -26,13 +25,25 @@
     </div>
 
     {{ form_start(filter_form, {'method': 'GET'}) }}
-        <div class="row mb-3">
-            <div class="col">{{ form_row(filter_form.nom, {'attr': {'class': 'form-control'}}) }}</div>
-            <div class="col">{{ form_row(filter_form.longueurMin, {'attr': {'class': 'form-control'}}) }}</div>
-            <div class="col">{{ form_row(filter_form.longueurMax, {'attr': {'class': 'form-control'}}) }}</div>
-            <div class="col">{{ form_row(filter_form.catalogueProjetCables, {'attr': {'class': 'form-control'}}) }}</div>
-            <div class="col">
-                <button type="submit" class="btn btn-primary mt-4">Filtrer</button>
+        <div class="row mb-4 g-3 align-items-end">
+            <div class="col-md-3">
+                {{ form_label(filter_form.nom) }}
+                {{ form_widget(filter_form.nom, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(filter_form.nom) }}
+            </div>
+            <div class="col-md-3">
+                {{ form_label(filter_form.longueur) }}
+                {{ form_widget(filter_form.longueur, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(filter_form.longueur) }}
+            </div>
+            <div class="col-md-3">
+                {{ form_label(filter_form.catalogueProjetCables) }}
+                {{ form_widget(filter_form.catalogueProjetCables, {'attr': {'class': 'form-select'}}) }}
+                {{ form_errors(filter_form.catalogueProjetCables) }}
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary me-2">Filtrer</button>
+                <a href="{{ path('cable_list', {'projetId': projet.id}) }}" class="btn btn-secondary">Réinitialiser</a>
             </div>
         </div>
     {{ form_end(filter_form) }}
@@ -43,10 +54,10 @@
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>{{ knp_pagination_sortable(cables, 'Nom', 'c.nom') }}</th>
-                    <th>{{ knp_pagination_sortable(cables, 'Longueur', 'c.longueur') }}</th>
-                    <th>{{ knp_pagination_sortable(cables, 'Catalogue', 'cat.nom') }}</th>
-                    <th>Actions</th>
+                    <th class="col-md-3">{{ knp_pagination_sortable(cables, 'Nom', 'c.nom') }}</th>
+                    <th class="col-md-3">{{ knp_pagination_sortable(cables, 'Longueur', 'c.longueur') }}</th>
+                    <th class="col-md-3">{{ knp_pagination_sortable(cables, 'Catalogue', 'cat.nom') }}</th>
+                    <th class="col-md-3">Actions</th>
                 </tr>
             </thead>
             <tbody>

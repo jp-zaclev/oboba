@@ -1,0 +1,84 @@
+{# templates/localisation/list.html.twig #}
+{% extends 'layout/project_layout.html.twig' %}
+{% set container_margin = false %}
+{% block title %}Liste des emplacements - {{ projet.nom }}{% endblock %}
+
+{% block page_content %}
+    <h1 class="text-white">Liste des emplacements pour {{ projet.nom }}</h1>
+
+    <div class="mb-3">
+        <div class="row g-2">
+            <div class="col-auto">
+                <a href="{{ path('projet_show', {'id': projet.id}) }}" class="btn btn-secondary">Retour à {{ projet.nom }}</a>
+            </div>
+            <div class="col-auto">
+                <a href="{{ path('localisation_new', {'projetId': projet.id}) }}" class="btn btn-primary">Ajouter un emplacement</a>
+            </div>
+        </div>
+    </div>
+
+    {{ form_start(filter_form, {'method': 'GET'}) }}
+        <div class="row mb-4 g-3 align-items-end">
+            <div class="col-md-3">
+                {{ form_label(filter_form.nom) }}
+                {{ form_widget(filter_form.nom, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(filter_form.nom) }}
+            </div>
+            <div class="col-md-2">
+                {{ form_label(filter_form.x) }}
+                {{ form_widget(filter_form.x, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(filter_form.x) }}
+            </div>
+            <div class="col-md-2">
+                {{ form_label(filter_form.y) }}
+                {{ form_widget(filter_form.y, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(filter_form.y) }}
+            </div>
+            <div class="col-md-2">
+                {{ form_label(filter_form.z) }}
+                {{ form_widget(filter_form.z, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(filter_form.z) }}
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary me-2">Filtrer</button>
+                <a href="{{ path('localisation_list', {'projetId': projet.id}) }}" class="btn btn-secondary">Réinitialiser</a>
+            </div>
+        </div>
+    {{ form_end(filter_form) }}
+
+    {% if emplacements is empty %}
+        <p class="text-white">Aucun emplacement trouvé pour ce projet.</p>
+    {% else %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th class="col-md-3">{{ knp_pagination_sortable(emplacements, 'Nom', 'l.nom') }}</th>
+                    <th class="col-md-2">{{ knp_pagination_sortable(emplacements, 'X', 'l.x') }}</th>
+                    <th class="col-md-2">{{ knp_pagination_sortable(emplacements, 'Y', 'l.y') }}</th>
+                    <th class="col-md-2">{{ knp_pagination_sortable(emplacements, 'Z', 'l.z') }}</th>
+                    <th class="col-md-3">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emplacement in emplacements %}
+                    <tr>
+                        <td>{{ emplacement.nom }}</td>
+                        <td>{{ emplacement.x|default('N/A') }}</td>
+                        <td>{{ emplacement.y|default('N/A') }}</td>
+                        <td>{{ emplacement.z|default('N/A') }}</td>
+                        <td>
+                            <a href="{{ path('localisation_edit', {'projetId': projet.id, 'id': emplacement.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                            <form method="post" action="{{ path('localisation_delete', {'projetId': projet.id, 'id': emplacement.id}) }}" style="display:inline;" onsubmit="return confirm('Supprimer cet emplacement ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ emplacement.id) }}">
+                                <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="navigation">
+            {{ knp_pagination_render(emplacements) }}
+        </div>
+    {% endif %}
+{% endblock %}

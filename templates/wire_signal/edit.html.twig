@@ -1,0 +1,21 @@
+{% extends 'layout/project_layout.html.twig' %}
+
+{% set container_margin = false %}
+
+{% block title %}Modifier un signal - {{ projet.nom }}{% endblock %}
+
+{% block page_content %}
+    <h1 class="text-white">Modifier le signal {{ signal.nom }} pour {{ projet.nom }}</h1>
+
+    <div class="card">
+        <div class="card-body">
+            {{ form_start(form) }}
+                <div class="mb-3">{{ form_row(form.nom, {'attr': {'class': 'form-control'}}) }}</div>
+                <div class="mb-3">{{ form_row(form.type, {'attr': {'class': 'form-control'}}) }}</div>
+                <div class="mb-3">{{ form_row(form.details, {'attr': {'class': 'form-control'}}) }}</div>
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                <a href="{{ path('wire_signal_list', {'projetId': projet.id}) }}" class="btn btn-secondary">Annuler</a>
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}

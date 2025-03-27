@@ -59,6 +59,9 @@ class Projet
 
     #[ORM\OneToMany(targetEntity: WireSignal::class, mappedBy: 'projet', cascade: ['persist', 'remove'])]
     private Collection $wireSignals;
+    
+    #[ORM\OneToMany(targetEntity: Localisation::class, mappedBy: 'projet')]
+    private Collection $localisations;
 
     public function __construct()
     {
@@ -73,6 +76,7 @@ class Projet
         $this->wireSignals = new ArrayCollection();
         $this->dateHeureCreation = new \DateTime();
         $this->dateHeureDerniereModification = new \DateTime();
+        $this->localisations = new ArrayCollection();
     }
 
     // Getters et Setters
@@ -337,5 +341,29 @@ class Projet
         })->map(function (ProjetUtilisateur $pu) {
             return $pu->getUtilisateur();
         });
+    }
+    
+    public function getLocalisations(): Collection
+    {
+        return $this->localisations;
+    }
+
+    public function addLocalisation(Localisation $localisation): self
+    {
+        if (!$this->localisations->contains($localisation)) {
+            $this->localisations[] = $localisation;
+            $localisation->setProjet($this);
+        }
+        return $this;
+    }
+
+    public function removeLocalisation(Localisation $localisation): self
+    {
+        if ($this->localisations->removeElement($localisation)) {
+            if ($localisation->getProjet() === $this) {
+                $localisation->setProjet(null);
+            }
+        }
+        return $this;
     }
 }

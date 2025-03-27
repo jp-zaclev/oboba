@@ -25,16 +25,17 @@
     <h2>Actions disponibles</h2>
     <div class="row mb-3">
         <div class="col-md-6">
-            <button class="btn btn-primary w-100 mb-2" disabled title="Fonctionnalité à venir">Liste des signaux</button>
-            <a href="{{ path('cable_list', {'projetId': projet.id}) }}" class="btn btn-primary w-100 mb-2">Liste des câbles</a>
-            <a href="{{ path('connecteur_list', {'projetId': projet.id}) }}" class="btn btn-primary w-100 mb-2">Liste des connecteurs</a>
-            <button class="btn btn-primary w-100 mb-2" disabled>Liste des borniers</button>
+            <a href="{{ path('wire_signal_list', {'projetId': projet.id}) }}" class="btn btn-primary w-100 mb-2">Signaux</a>
+            <a href="{{ path('cable_list', {'projetId': projet.id}) }}" class="btn btn-primary w-100 mb-2">Câbles</a>
+            <a href="{{ path('connecteur_list', {'projetId': projet.id}) }}" class="btn btn-primary w-100 mb-2">Connecteurs</a>
+            <a href="{{ path('bornier_list', {'projetId': projet.id}) }}" class="btn btn-primary w-100 mb-2">Borniers</a>
+            <a href="{{ path('localisation_list', {'projetId': projet.id}) }}" class="btn btn-primary w-100 mb-2">Emplacements</a>
         </div>
         <div class="col-md-6">
             <a href="{{ path('catalogue_projet_cables_list', {'projetId': projet.id}) }}" class="btn btn-primary w-100 mb-2">Catalogue des câbles</a>
-<a href="{{ path('catalogue_projet_connecteurs_list', {'projetId': projet.id}) }}" class="btn btn-primary w-100 mb-2">Catalogue des connecteurs</a>
+            <a href="{{ path('catalogue_projet_connecteurs_list', {'projetId': projet.id}) }}" class="btn btn-primary w-100 mb-2">Catalogue des connecteurs</a>
             <a href="{{ path('catalogue_projet_borniers_list', {'projetId': projet.id}) }}" class="btn btn-primary w-100 mb-2">Catalogue des borniers</a>
-	    <a href="{{ path('projet_export_xml', {'id': projet.id}) }}" class="btn btn-success w-100 mb-2">Exporter en XML</a>
+            <a href="{{ path('projet_export_xml', {'id': projet.id}) }}" class="btn btn-success w-100 mb-2">Exporter en XML</a>
         </div>
     </div>
 

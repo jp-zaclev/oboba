@@ -1,7 +1,6 @@
-{# templates/catalogue_modele_borniers/list.html.twig #}
 {% extends 'layout/project_layout.html.twig' %}
 
-{% set container_margin = false %} {# Pas de mt-4 ici #}
+{% set container_margin = false %}
 
 {% block title %}Catalogue des modèles de borniers - Oboba{% endblock %}
 
@@ -33,37 +32,92 @@
     {% if borniers is empty %}
         <p class="text-white">Aucun modèle de bornier disponible pour le moment.</p>
     {% else %}
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>{{ knp_pagination_sortable(borniers, 'Nom', 'b.nom') }}</th>
-                    <th>{{ knp_pagination_sortable(borniers, 'Nombre de bornes', 'b.nombreBornes') }}</th>
-                    <th>{{ knp_pagination_sortable(borniers, 'Caractéristiques', 'b.caracteristiques') }}</th>
-                    <th>{{ knp_pagination_sortable(borniers, 'Prix unitaire', 'b.prixUnitaire') }}</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for bornier in borniers %}
-                    <tr>
-                        <td>{{ bornier.nom }}</td>
-                        <td>{{ bornier.nombreBornes }}</td>
-                        <td>{{ bornier.caracteristiques }}</td>
-                        <td>{{ bornier.prixUnitaire|number_format(2, '.', ',') }}</td>
-                        <td>
-                            <a href="{{ path('catalogue_modele_borniers_edit', {'id': bornier.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
-                            <form method="post" action="{{ path('catalogue_modele_borniers_delete', {'id': bornier.id}) }}" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer ce modèle ?');">
-                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ bornier.id) }}">
-                                <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
-                            </form>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <form method="post" id="delete-form" onsubmit="return confirm('Voulez-vous vraiment supprimer les modèles sélectionnés ?');">
+            <div class="mb-3">
+                <button type="submit" class="btn btn-danger" id="delete-selected" disabled>Effacer les éléments sélectionnés</button>
+            </div>
 
-        <div class="navigation">
-            {{ knp_pagination_render(borniers) }}
-        </div>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="select-all"></th>
+                        <th>{{ knp_pagination_sortable(borniers, 'Nom', 'b.nom') }}</th>
+                        <th>{{ knp_pagination_sortable(borniers, 'Nombre de bornes', 'b.nombreBornes') }}</th>
+                        <th>{{ knp_pagination_sortable(borniers, 'Caractéristiques', 'b.caracteristiques') }}</th>
+                        <th>{{ knp_pagination_sortable(borniers, 'Prix unitaire', 'b.prixUnitaire') }}</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bornier in borniers %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="selected_items[]" value="{{ bornier.id }}"
+                                       class="select-item" {% if bornier.id in selected_ids %}checked{% endif %}>
+                            </td>
+                            <td>{{ bornier.nom }}</td>
+                            <td>{{ bornier.nombreBornes }}</td>
+                            <td>{{ bornier.caracteristiques }}</td>
+                            <td>{{ bornier.prixUnitaire|number_format(2, '.', ',') }}</td>
+                            <td>
+                                <a href="{{ path('catalogue_modele_borniers_edit', {'id': bornier.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                                <form method="post" action="{{ path('catalogue_modele_borniers_delete', {'id': bornier.id}) }}" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer ce modèle ?');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ bornier.id) }}">
+                                    <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="navigation">
+                {{ knp_pagination_render(borniers) }}
+            </div>
+        </form>
     {% endif %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const selectAll = document.getElementById('select-all');
+            const selectItems = document.querySelectorAll('.select-item');
+            const deleteButton = document.getElementById('delete-selected');
+
+            // Mettre à jour l'état du bouton "Effacer"
+            function updateDeleteButton() {
+                const checkedCount = document.querySelectorAll('.select-item:checked').length;
+                deleteButton.disabled = checkedCount === 0;
+            }
+
+            // Case "Tout sélectionner"
+            selectAll.addEventListener('change', function () {
+                selectItems.forEach(item => {
+                    item.checked = selectAll.checked;
+                    toggleSelection(item);
+                });
+                updateDeleteButton();
+            });
+
+            // Gestion des cases individuelles
+            selectItems.forEach(item => {
+                item.addEventListener('change', function () {
+                    toggleSelection(item);
+                    updateDeleteButton();
+                    selectAll.checked = document.querySelectorAll('.select-item:not(:checked)').length === 0;
+                });
+            });
+
+            // Persistance des sélections via AJAX
+            function toggleSelection(item) {
+                const itemId = item.value;
+                fetch(`{{ path('catalogue_modele_borniers_list') }}?toggle_selection=1&item_id=${itemId}`, {
+                    method: 'GET',
+                }).then(response => response.json())
+                  .then(data => console.log('Sélection mise à jour:', data.selected));
+            }
+
+            // Initialisation
+            updateDeleteButton();
+        });
+    </script>
 {% endblock %}

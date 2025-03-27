@@ -27,10 +27,45 @@ use Knp\Component\Pager\PaginatorInterface;
 #[Route('/projets')]
 class ProjetController extends AbstractController
 {
-    #[Route('', name: 'projet_list', methods: ['GET'])]
+#[Route('', name: 'projet_list', methods: ['GET', 'POST'])]
     public function list(EntityManagerInterface $em, Request $request, PaginatorInterface $paginator): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $session = $request->getSession();
+        $selectedIds = $session->get('selected_projets', []);
+
+        // Gestion des suppressions multiples via POST
+        if ($request->isMethod('POST')) {
+            if (empty($selectedIds)) {
+                $this->addFlash('warning', 'Aucun projet sélectionné pour la suppression.');
+            } else {
+                $itemsToDelete = $em->getRepository(Projet::class)->findBy(['id' => $selectedIds]);
+                if (empty($itemsToDelete)) {
+                    $this->addFlash('error', 'Aucun projet valide trouvé pour la suppression.');
+                } else {
+                    foreach ($itemsToDelete as $projet) {
+                        $em->remove($projet);
+                    }
+                    $em->flush();
+                    $this->addFlash('success', 'Projets sélectionnés supprimés avec succès.');
+                    $session->set('selected_projets', []);
+                }
+            }
+            return $this->redirectToRoute('projet_list');
+        }
+
+        // Mise à jour des sélections via GET (AJAX)
+        if ($request->query->has('toggle_selection')) {
+            $itemId = $request->query->get('item_id');
+            if (in_array($itemId, $selectedIds)) {
+                $selectedIds = array_diff($selectedIds, [$itemId]);
+            } else {
+                $selectedIds[] = $itemId;
+            }
+            $session->set('selected_projets', $selectedIds);
+            return $this->json(['success' => true, 'selected' => $selectedIds]);
+        }
 
         $qb = $em->getRepository(Projet::class)->createQueryBuilder('p');
 
@@ -46,6 +81,7 @@ class ProjetController extends AbstractController
 
         return $this->render('projet/list.html.twig', [
             'projets' => $projets,
+            'selected_ids' => $selectedIds,
         ]);
     }
 

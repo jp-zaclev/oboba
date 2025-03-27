@@ -2,6 +2,7 @@
 namespace App\Controller;
 
 use App\Entity\CatalogueProjetConnecteurs;
+use App\Entity\CatalogueModeleConnecteurs;
 use App\Entity\Projet;
 use App\Form\CatalogueProjetConnecteursFilterType;
 use App\Form\CatalogueProjetConnecteursType;
@@ -15,7 +16,7 @@ use Knp\Component\Pager\PaginatorInterface;
 
 class CatalogueProjetConnecteursController extends BaseController
 {
-    #[Route('/projet/{projetId}/catalogue-connecteurs', name: 'catalogue_projet_connecteurs_list', methods: ['GET'])]
+    #[Route('/projet/{projetId}/catalogue-connecteurs', name: 'catalogue_projet_connecteurs_list', methods: ['GET', 'POST'])]
     public function list(
         int $projetId,
         ProjetRepository $projetRepository,
@@ -30,6 +31,41 @@ class CatalogueProjetConnecteursController extends BaseController
         }
 
         $this->checkProjectAccess($projet, $em);
+
+        $session = $request->getSession();
+        $selectedIds = $session->get('selected_connecteurs_' . $projetId, []);
+
+        // Gestion des suppressions multiples via POST
+        if ($request->isMethod('POST') && $this->isGranted('CAN_EDIT_CONNECTEURS', $projet)) {
+            if (empty($selectedIds)) {
+                $this->addFlash('warning', 'Aucun élément sélectionné pour la suppression.');
+            } else {
+                $itemsToDelete = $em->getRepository(CatalogueProjetConnecteurs::class)->findBy(['id' => $selectedIds, 'projet' => $projet]);
+                if (empty($itemsToDelete)) {
+                    $this->addFlash('error', 'Aucun élément valide trouvé pour la suppression.');
+                } else {
+                    foreach ($itemsToDelete as $item) {
+                        $em->remove($item);
+                    }
+                    $em->flush();
+                    $this->addFlash('success', 'Connecteurs sélectionnés supprimés avec succès.');
+                    $session->set('selected_connecteurs_' . $projetId, []);
+                }
+            }
+            return $this->redirectToRoute('catalogue_projet_connecteurs_list', ['projetId' => $projetId]);
+        }
+
+        // Mise à jour des sélections via GET (AJAX)
+        if ($request->query->has('toggle_selection') && $this->isGranted('CAN_EDIT_CONNECTEURS', $projet)) {
+            $itemId = $request->query->get('item_id');
+            if (in_array($itemId, $selectedIds)) {
+                $selectedIds = array_diff($selectedIds, [$itemId]);
+            } else {
+                $selectedIds[] = $itemId;
+            }
+            $session->set('selected_connecteurs_' . $projetId, $selectedIds);
+            return $this->json(['success' => true, 'selected' => $selectedIds]);
+        }
 
         $filterForm = $formFactory->create(CatalogueProjetConnecteursFilterType::class);
         $filterForm->handleRequest($request);
@@ -77,6 +113,7 @@ class CatalogueProjetConnecteursController extends BaseController
             'projet' => $projet,
             'connecteurs' => $connecteurs,
             'filter_form' => $filterForm->createView(),
+            'selected_ids' => $selectedIds,
         ]);
     }
 
@@ -93,7 +130,7 @@ class CatalogueProjetConnecteursController extends BaseController
             throw $this->createNotFoundException('Projet non trouvé');
         }
 
-        $this->denyAccessUnlessGranted('CAN_EDIT_CABLES', $projet);
+        $this->denyAccessUnlessGranted('CAN_EDIT_CONNECTEURS', $projet);
 
         $connecteur = new CatalogueProjetConnecteurs();
         $connecteur->setProjet($projet);
@@ -121,7 +158,7 @@ class CatalogueProjetConnecteursController extends BaseController
         FormFactoryInterface $formFactory
     ): Response {
         $projet = $connecteur->getProjet();
-        $this->denyAccessUnlessGranted('CAN_EDIT_CABLES', $projet);
+        $this->denyAccessUnlessGranted('CAN_EDIT_CONNECTEURS', $projet);
 
         $form = $formFactory->create(CatalogueProjetConnecteursType::class, $connecteur);
         $form->handleRequest($request);
@@ -146,7 +183,7 @@ class CatalogueProjetConnecteursController extends BaseController
         EntityManagerInterface $em
     ): Response {
         $projet = $connecteur->getProjet();
-        $this->denyAccessUnlessGranted('CAN_EDIT_CABLES', $projet);
+        $this->denyAccessUnlessGranted('CAN_EDIT_CONNECTEURS', $projet);
 
         if (!$this->isCsrfTokenValid('delete_' . $connecteur->getId(), $request->request->get('_token'))) {
             throw new AccessDeniedException('Token CSRF invalide');
@@ -157,4 +194,56 @@ class CatalogueProjetConnecteursController extends BaseController
         $this->addFlash('success', 'Connecteur supprimé du catalogue avec succès');
         return $this->redirectToRoute('catalogue_projet_connecteurs_list', ['projetId' => $projet->getId()]);
     }
+
+#[Route('/catalogue/projet/{projetId}/connecteurs/import', name: 'catalogue_projet_connecteurs_import', methods: ['POST'])]
+    public function importFromModele(int $projetId, Request $request, EntityManagerInterface $em): Response
+    {
+        $utilisateur = $this->getUser();
+        if (!$utilisateur) {
+            return $this->redirectToRoute('login');
+        }
+
+        $projet = $em->getRepository(Projet::class)->find($projetId);
+        if (!$projet) {
+            throw $this->createNotFoundException('Projet non trouvé.');
+        }
+
+        if (!$this->isGranted('CAN_EDIT_CONNECTEURS', $projet)) {
+            throw $this->createAccessDeniedException('Vous n’avez pas le droit d’importer des connecteurs pour ce projet.');
+        }
+
+        if ($this->isCsrfTokenValid('import_connecteurs_' . $projet->getId(), $request->request->get('_token'))) {
+            $importedCount = 0;
+            $existingConnecteurs = $projet->getCatalogueProjetConnecteurs()->map(fn($connecteur) => $connecteur->getNom())->toArray();
+            $modeleConnecteurs = $em->getRepository(CatalogueModeleConnecteurs::class)->findAll();
+
+            foreach ($modeleConnecteurs as $modele) {
+                if (!in_array($modele->getNom(), $existingConnecteurs)) {
+                    $projetConnecteur = new CatalogueProjetConnecteurs();
+                    $projetConnecteur->setProjet($projet)
+                                     ->setNom($modele->getNom())
+                                     ->setType($modele->getType())
+                                     ->setNombreContacts($modele->getNombreContacts())
+                                     ->setPrixUnitaire($modele->getPrixUnitaire());
+                    $em->persist($projetConnecteur);
+                    $projet->addCatalogueProjetConnecteur($projetConnecteur);
+                    $importedCount++;
+                }
+            }
+
+            $projet->setDateHeureDerniereModification(new \DateTime());
+            $em->flush();
+
+            if ($importedCount > 0) {
+                $this->addFlash('success', "$importedCount nouveaux connecteurs ont été importés depuis le catalogue modèle.");
+            } else {
+                $this->addFlash('info', 'Aucun nouveau connecteur à importer depuis le catalogue modèle.');
+            }
+        } else {
+            $this->addFlash('danger', 'Erreur de sécurité lors de l’importation des connecteurs.');
+        }
+
+        return $this->redirectToRoute('catalogue_projet_connecteurs_list', ['projetId' => $projet->getId()]);
+    }
+
 }
