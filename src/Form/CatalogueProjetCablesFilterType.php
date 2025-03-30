@@ -1,45 +1,25 @@
 <?php
 namespace App\Form;
 
-use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
-use Symfony\Component\Form\Extension\Core\Type\IntegerType;
-use Symfony\Component\Form\Extension\Core\Type\NumberType;
+use Symfony\Component\Form\FormBuilderInterface;
 
-class CatalogueProjetCablesFilterType extends AbstractType
+class CatalogueProjetCablesFilterType extends AbstractCatalogueFilterType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        parent::buildForm($builder, $options);
+
         $builder
-            ->add('nom', TextType::class, [
-                'label' => 'Nom',
-                'required' => false,
-            ])
             ->add('type', TextType::class, [
                 'label' => 'Type',
                 'required' => false,
+                'attr' => ['placeholder' => 'Filtrer par type'],
             ])
-            ->add('nombreConducteursMax', IntegerType::class, [
-                'label' => 'Nombre de conducteurs max',
+            ->add('nbConducteurs', TextType::class, [
+                'label' => 'Nombre de conducteurs',
                 'required' => false,
-            ])
-            ->add('prixUnitaireMin', NumberType::class, [
-                'label' => 'Prix unitaire min',
-                'required' => false,
-            ])
-            ->add('prixUnitaireMax', NumberType::class, [
-                'label' => 'Prix unitaire max',
-                'required' => false,
+                'attr' => ['placeholder' => 'Ex: >10, <5, 10-20'],
             ]);
-    }
-
-    public function configureOptions(OptionsResolver $resolver): void
-    {
-        $resolver->setDefaults([
-            'method' => 'GET',
-            'csrf_protection' => false,
-        ]);
     }
 }

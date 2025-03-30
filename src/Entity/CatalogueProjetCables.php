@@ -1,34 +1,44 @@
 <?php
-
+// src/Entity/CatalogueProjetCables.php
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
-#[ORM\Table(name: 'catalogue_projet_cables')]
-#[ORM\UniqueConstraint(name: 'unique_projet_nom', columns: ['id_projet', 'nom'])]
+#[ORM\Table(name: "catalogue_projet_cables")]
+#[ORM\UniqueConstraint(name: "unique_projet_nom", columns: ["id_projet", "nom"])]
 class CatalogueProjetCables
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: "integer")]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Projet::class, inversedBy: 'catalogueProjetCables')]
-    #[ORM\JoinColumn(name: 'id_projet', referencedColumnName: 'id', nullable: false)]
+    #[ORM\ManyToOne(targetEntity: Projet::class, inversedBy: "catalogueProjetCables")]
+    #[ORM\JoinColumn(name: "id_projet", referencedColumnName: "id", nullable: false)]
     private ?Projet $projet = null;
 
-    #[ORM\Column(type: 'string', length: 255)]
+    #[ORM\Column(type: "string", length: 255)]
     private ?string $nom = null;
 
-    #[ORM\Column(type: 'integer')]
-    private ?int $nombreConducteursMax = null;
+    #[ORM\Column(type: "integer")]
+    private ?int $nbConducteurs = null;
 
-    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: false)]
+    #[ORM\Column(type: "decimal", precision: 10, scale: 2, nullable: false)]
     private float $prixUnitaire = 0.00;
 
-    #[ORM\Column(type: 'string', length: 50)]
+    #[ORM\Column(type: "string", length: 50)]
     private ?string $type = null;
+
+    #[ORM\OneToMany(targetEntity: CatalogueConducteur::class, mappedBy: "catalogueProjetCables", cascade: ["persist", "remove"])]
+    private Collection $catalogueConducteurs;
+
+    public function __construct()
+    {
+        $this->catalogueConducteurs = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -57,23 +67,23 @@ class CatalogueProjetCables
         return $this;
     }
 
-    public function getNombreConducteursMax(): ?int
+    public function getNbConducteurs(): ?int
     {
-        return $this->nombreConducteursMax;
+        return $this->nbConducteurs;
     }
 
-    public function setNombreConducteursMax(int $nombreConducteursMax): self
+    public function setNbConducteurs(int $nbConducteurs): self
     {
-        $this->nombreConducteursMax = $nombreConducteursMax;
+        $this->nbConducteurs = $nbConducteurs;
         return $this;
     }
 
-    public function getPrixUnitaire(): float|string|null
+    public function getPrixUnitaire(): float
     {
         return $this->prixUnitaire;
     }
 
-    public function setPrixUnitaire(float|string|null $prixUnitaire): self
+    public function setPrixUnitaire(float $prixUnitaire): self
     {
         $this->prixUnitaire = $prixUnitaire;
         return $this;
@@ -87,6 +97,33 @@ class CatalogueProjetCables
     public function setType(string $type): self
     {
         $this->type = $type;
+        return $this;
+    }
+
+    /**
+     * @return Collection|CatalogueConducteur[]
+     */
+    public function getCatalogueConducteurs(): Collection
+    {
+        return $this->catalogueConducteurs;
+    }
+
+    public function addCatalogueConducteur(CatalogueConducteur $catalogueConducteur): self
+    {
+        if (!$this->catalogueConducteurs->contains($catalogueConducteur)) {
+            $this->catalogueConducteurs[] = $catalogueConducteur;
+            $catalogueConducteur->setCatalogueProjetCables($this);
+        }
+        return $this;
+    }
+
+    public function removeCatalogueConducteur(CatalogueConducteur $catalogueConducteur): self
+    {
+        if ($this->catalogueConducteurs->removeElement($catalogueConducteur)) {
+            if ($catalogueConducteur->getCatalogueProjetCables() === $this) {
+                $catalogueConducteur->setCatalogueProjetCables(null);
+            }
+        }
         return $this;
     }
 }

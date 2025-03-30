@@ -3,11 +3,14 @@ namespace App\Form;
 
 use App\Entity\CatalogueProjetBorniers;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\PositiveOrZero;
 
 class CatalogueProjetBorniersType extends AbstractType
 {
@@ -16,9 +19,16 @@ class CatalogueProjetBorniersType extends AbstractType
         $builder
             ->add('nom', TextType::class, [
                 'label' => 'Nom',
+                'constraints' => [
+                    new NotBlank(['message' => 'Le nom est requis']),
+                ],
             ])
             ->add('nombreBornes', IntegerType::class, [
                 'label' => 'Nombre de bornes',
+                'constraints' => [
+                    new NotBlank(['message' => 'Le nombre de bornes est requis']),
+                    new PositiveOrZero(['message' => 'Le nombre de bornes doit être positif ou zéro']),
+                ],
             ])
             ->add('caracteristiques', TextType::class, [
                 'label' => 'Caractéristiques',
@@ -28,6 +38,18 @@ class CatalogueProjetBorniersType extends AbstractType
                 'label' => 'Prix unitaire',
                 'scale' => 2,
                 'attr' => ['step' => '0.01'],
+                'constraints' => [
+                    new NotBlank(['message' => 'Le prix unitaire est requis']),
+                    new PositiveOrZero(['message' => 'Le prix unitaire doit être positif ou zéro']),
+                ],
+            ])
+            ->add('catalogueBornes', CollectionType::class, [
+                'label' => 'Bornes',
+                'entry_type' => CatalogueBorneType::class,
+                'allow_add' => true,
+                'allow_delete' => true,
+                'by_reference' => false,
+                'prototype' => true,
             ]);
     }
 

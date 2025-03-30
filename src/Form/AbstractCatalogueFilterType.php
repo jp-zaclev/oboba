@@ -1,32 +1,32 @@
 <?php
 namespace App\Form;
 
+use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-class CatalogueProjetConnecteursFilterType extends AbstractCatalogueFilterType
+abstract class AbstractCatalogueFilterType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        parent::buildForm($builder, $options);
-
         $builder
-            ->add('type', TextType::class, [
-                'label' => 'Type',
+            ->add('nom', TextType::class, [
+                'label' => 'Nom',
                 'required' => false,
-                'attr' => ['placeholder' => 'Filtrer par type'],
+                'attr' => ['placeholder' => 'Filtrer par nom'],
             ])
-            ->add('nombreContacts', TextType::class, [
-                'label' => 'Nombre de contacts',
+            ->add('prixUnitaire', TextType::class, [
+                'label' => 'Prix',
                 'required' => false,
-                'attr' => ['placeholder' => 'Ex: >4, <10, 2-6'],
+                'attr' => ['placeholder' => 'Ex: >1.5, <10, 2-5'],
             ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
+            'data_class' => null,
             'method' => 'GET',
             'csrf_protection' => false,
         ]);

@@ -1,6 +1,8 @@
 <?php
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -24,6 +26,14 @@ class CatalogueModeleBorniers
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: false)]
     private float $prixUnitaire = 0.00;
+
+    #[ORM\OneToMany(targetEntity: CatalogueBorne::class, mappedBy: 'catalogueModeleBorniers', cascade: ['persist', 'remove'])]
+    private Collection $catalogueBornes;
+
+    public function __construct()
+    {
+        $this->catalogueBornes = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -71,6 +81,33 @@ class CatalogueModeleBorniers
     public function setPrixUnitaire(float $prix): self
     {
         $this->prixUnitaire = $prix;
+        return $this;
+    }
+
+    /**
+     * @return Collection|CatalogueBorne[]
+     */
+    public function getCatalogueBornes(): Collection
+    {
+        return $this->catalogueBornes;
+    }
+
+    public function addCatalogueBorne(CatalogueBorne $borne): self
+    {
+        if (!$this->catalogueBornes->contains($borne)) {
+            $this->catalogueBornes[] = $borne;
+            $borne->setCatalogueModeleBorniers($this);
+        }
+        return $this;
+    }
+
+    public function removeCatalogueBorne(CatalogueBorne $borne): self
+    {
+        if ($this->catalogueBornes->removeElement($borne)) {
+            if ($borne->getCatalogueModeleBorniers() === $this) {
+                $borne->setCatalogueModeleBorniers(null);
+            }
+        }
         return $this;
     }
 }

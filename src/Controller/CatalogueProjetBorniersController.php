@@ -4,6 +4,7 @@ namespace App\Controller;
 use App\Entity\CatalogueProjetBorniers;
 use App\Entity\CatalogueModeleBorniers;
 use App\Entity\Projet;
+use App\Entity\CatalogueBorne;
 use App\Form\CatalogueProjetBorniersFilterType;
 use App\Form\CatalogueProjetBorniersType;
 use App\Repository\ProjetRepository;
@@ -16,6 +17,8 @@ use Knp\Component\Pager\PaginatorInterface;
 
 class CatalogueProjetBorniersController extends BaseController
 {
+    use FilterHelperTrait;
+
     #[Route('/projet/{projetId}/catalogue-borniers', name: 'catalogue_projet_borniers_list', methods: ['GET', 'POST'])]
     public function list(
         int $projetId,
@@ -35,7 +38,6 @@ class CatalogueProjetBorniersController extends BaseController
         $session = $request->getSession();
         $selectedIds = $session->get('selected_borniers_' . $projetId, []);
 
-        // Gestion des suppressions multiples via POST
         if ($request->isMethod('POST') && $this->isGranted('CAN_EDIT_BORNIERS', $projet)) {
             if (empty($selectedIds)) {
                 $this->addFlash('warning', 'Aucun élément sélectionné pour la suppression.');
@@ -55,7 +57,6 @@ class CatalogueProjetBorniersController extends BaseController
             return $this->redirectToRoute('catalogue_projet_borniers_list', ['projetId' => $projetId]);
         }
 
-        // Mise à jour des sélections via GET (AJAX)
         if ($request->query->has('toggle_selection') && $this->isGranted('CAN_EDIT_BORNIERS', $projet)) {
             $itemId = $request->query->get('item_id');
             if (in_array($itemId, $selectedIds)) {
@@ -72,34 +73,27 @@ class CatalogueProjetBorniersController extends BaseController
 
         $qb = $em->getRepository(CatalogueProjetBorniers::class)->createQueryBuilder('b')
             ->where('b.projet = :projet')
-            ->setParameter('projet', $projet);
+            ->setParameter('projet', $projet)
+            ->leftJoin('b.catalogueBornes', 'cb')
+            ->addSelect('cb');
 
         if ($filterForm->isSubmitted() && $filterForm->isValid()) {
             $data = $filterForm->getData();
-
             if ($data['nom']) {
-                $qb->andWhere('b.nom LIKE :nom')
-                   ->setParameter('nom', '%' . $data['nom'] . '%');
+                $qb->andWhere('b.nom LIKE :nom')->setParameter('nom', '%' . $data['nom'] . '%');
             }
-            if ($data['nombreBornes'] !== null) {
-                $qb->andWhere('b.nombreBornes = :nombreBornes')
-                   ->setParameter('nombreBornes', $data['nombreBornes']);
+            if ($data['nombreBornes'] !== null && $data['nombreBornes'] !== '') {
+                $this->applyNumericFilter($qb, 'b.nombreBornes', $data['nombreBornes'], 'bornes');
             }
             if ($data['caracteristiques']) {
-                $qb->andWhere('b.caracteristiques LIKE :caracteristiques')
-                   ->setParameter('caracteristiques', '%' . $data['caracteristiques'] . '%');
+                $qb->andWhere('b.caracteristiques LIKE :caracteristiques')->setParameter('caracteristiques', '%' . $data['caracteristiques'] . '%');
             }
-            if ($data['prixUnitaireMin'] !== null) {
-                $qb->andWhere('b.prixUnitaire >= :prixUnitaireMin')
-                   ->setParameter('prixUnitaireMin', $data['prixUnitaireMin']);
-            }
-            if ($data['prixUnitaireMax'] !== null) {
-                $qb->andWhere('b.prixUnitaire <= :prixUnitaireMax')
-                   ->setParameter('prixUnitaireMax', $data['prixUnitaireMax']);
+            if ($data['prixUnitaire'] !== null && $data['prixUnitaire'] !== '') {
+                $this->applyNumericFilter($qb, 'b.prixUnitaire', $data['prixUnitaire'], 'prix');
             }
         }
 
-        $borniers = $paginator->paginate(
+        $items = $paginator->paginate(
             $qb->getQuery(),
             $request->query->getInt('page', 1),
             10,
@@ -111,7 +105,7 @@ class CatalogueProjetBorniersController extends BaseController
 
         return $this->render('catalogue_projet_borniers/list.html.twig', [
             'projet' => $projet,
-            'borniers' => $borniers,
+            'items' => $items,
             'filter_form' => $filterForm->createView(),
             'selected_ids' => $selectedIds,
         ]);
@@ -138,6 +132,16 @@ class CatalogueProjetBorniersController extends BaseController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Si aucune borne n’a été ajoutée manuellement, générer des bornes par défaut
+            if ($bornier->getCatalogueBornes()->isEmpty() && $bornier->getNombreBornes() > 0) {
+                for ($i = 1; $i <= $bornier->getNombreBornes(); $i++) {
+                    $borne = new CatalogueBorne();
+                    $borne->setAttribut("$i");
+                    $bornier->addCatalogueBorne($borne);
+                    $em->persist($borne);
+                }
+            }
+
             $em->persist($bornier);
             $em->flush();
             $this->addFlash('success', 'Bornier ajouté au catalogue avec succès');
@@ -150,20 +154,34 @@ class CatalogueProjetBorniersController extends BaseController
         ]);
     }
 
-    #[Route('/catalogue-borniers/{id}/edit', name: 'catalogue_projet_borniers_edit', methods: ['GET', 'POST'])]
+    #[Route('/projet/{projetId}/catalogue-borniers/{id}/edit', name: 'catalogue_projet_borniers_edit', methods: ['GET', 'POST'])]
     public function edit(
+        int $projetId,
         CatalogueProjetBorniers $bornier,
         Request $request,
         EntityManagerInterface $em,
         FormFactoryInterface $formFactory
     ): Response {
         $projet = $bornier->getProjet();
+        if ($projet->getId() !== $projetId) {
+            throw $this->createNotFoundException('Bornier ou projet non trouvé');
+        }
         $this->denyAccessUnlessGranted('CAN_EDIT_BORNIERS', $projet);
 
         $form = $formFactory->create(CatalogueProjetBorniersType::class, $bornier);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Optionnel : générer des bornes si la collection est vide
+            if ($bornier->getCatalogueBornes()->isEmpty() && $bornier->getNombreBornes() > 0) {
+                for ($i = 1; $i <= $bornier->getNombreBornes(); $i++) {
+                    $borne = new CatalogueBorne();
+                    $borne->setAttribut("$i");
+                    $bornier->addCatalogueBorne($borne);
+                    $em->persist($borne);
+                }
+            }
+
             $em->flush();
             $this->addFlash('success', 'Bornier du catalogue modifié avec succès');
             return $this->redirectToRoute('catalogue_projet_borniers_list', ['projetId' => $projet->getId()]);
@@ -176,13 +194,17 @@ class CatalogueProjetBorniersController extends BaseController
         ]);
     }
 
-    #[Route('/catalogue-borniers/{id}/delete', name: 'catalogue_projet_borniers_delete', methods: ['POST'])]
+    #[Route('/projet/{projetId}/catalogue-borniers/{id}/delete', name: 'catalogue_projet_borniers_delete', methods: ['POST'])]
     public function delete(
+        int $projetId,
         CatalogueProjetBorniers $bornier,
         Request $request,
         EntityManagerInterface $em
     ): Response {
         $projet = $bornier->getProjet();
+        if ($projet->getId() !== $projetId) {
+            throw $this->createNotFoundException('Bornier ou projet non trouvé');
+        }
         $this->denyAccessUnlessGranted('CAN_EDIT_BORNIERS', $projet);
 
         if (!$this->isCsrfTokenValid('delete_' . $bornier->getId(), $request->request->get('_token'))) {
@@ -195,9 +217,12 @@ class CatalogueProjetBorniersController extends BaseController
         return $this->redirectToRoute('catalogue_projet_borniers_list', ['projetId' => $projet->getId()]);
     }
 
-#[Route('/catalogue/projet/{projetId}/borniers/import', name: 'catalogue_projet_borniers_import', methods: ['POST'])]
-    public function importFromModele(int $projetId, Request $request, EntityManagerInterface $em): Response
-    {
+    #[Route('/projet/{projetId}/catalogue-borniers/import', name: 'catalogue_projet_borniers_import', methods: ['POST'])]
+    public function importFromModele(
+        int $projetId,
+        Request $request,
+        EntityManagerInterface $em
+    ): Response {
         $utilisateur = $this->getUser();
         if (!$utilisateur) {
             return $this->redirectToRoute('login');
@@ -225,6 +250,14 @@ class CatalogueProjetBorniersController extends BaseController
                                   ->setNombreBornes($modele->getNombreBornes())
                                   ->setCaracteristiques($modele->getCaracteristiques())
                                   ->setPrixUnitaire($modele->getPrixUnitaire());
+
+                    foreach ($modele->getCatalogueBornes() as $borneModele) {
+                        $newBorne = new CatalogueBorne();
+                        $newBorne->setAttribut($borneModele->getAttribut());
+                        $projetBornier->addCatalogueBorne($newBorne);
+                        $em->persist($newBorne);
+                    }
+
                     $em->persist($projetBornier);
                     $projet->addCatalogueProjetBornier($projetBornier);
                     $importedCount++;
@@ -245,5 +278,4 @@ class CatalogueProjetBorniersController extends BaseController
 
         return $this->redirectToRoute('catalogue_projet_borniers_list', ['projetId' => $projet->getId()]);
     }
-
 }

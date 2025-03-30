@@ -1,5 +1,5 @@
 <?php
-
+// src/Controller/ProjetController.php
 namespace App\Controller;
 
 use App\Entity\Projet;
@@ -27,7 +27,7 @@ use Knp\Component\Pager\PaginatorInterface;
 #[Route('/projets')]
 class ProjetController extends AbstractController
 {
-#[Route('', name: 'projet_list', methods: ['GET', 'POST'])]
+    #[Route('', name: 'projet_list', methods: ['GET', 'POST'])]
     public function list(EntityManagerInterface $em, Request $request, PaginatorInterface $paginator): Response
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
@@ -35,7 +35,6 @@ class ProjetController extends AbstractController
         $session = $request->getSession();
         $selectedIds = $session->get('selected_projets', []);
 
-        // Gestion des suppressions multiples via POST
         if ($request->isMethod('POST')) {
             if (empty($selectedIds)) {
                 $this->addFlash('warning', 'Aucun projet sélectionné pour la suppression.');
@@ -55,7 +54,6 @@ class ProjetController extends AbstractController
             return $this->redirectToRoute('projet_list');
         }
 
-        // Mise à jour des sélections via GET (AJAX)
         if ($request->query->has('toggle_selection')) {
             $itemId = $request->query->get('item_id');
             if (in_array($itemId, $selectedIds)) {
@@ -85,64 +83,65 @@ class ProjetController extends AbstractController
         ]);
     }
 
-	#[Route('/new', name: 'projet_new', methods: ['GET', 'POST'])]
-	#[IsGranted('ROLE_ADMIN')]
-	public function new(Request $request, EntityManagerInterface $em): Response
-	{
-	    $projet = new Projet();
-	    $form = $this->createForm(ProjetType::class, $projet);
-	    $form->handleRequest($request);
+    #[Route('/new', name: 'projet_new', methods: ['GET', 'POST'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function new(Request $request, EntityManagerInterface $em): Response
+    {
+        $projet = new Projet();
+        $form = $this->createForm(ProjetType::class, $projet);
+        $form->handleRequest($request);
 
-	    if ($form->isSubmitted() && $form->isValid()) {
-		$proprietaireId = $request->request->get('proprietaire');
-		$concepteursIds = $request->request->get('concepteurs', []);
-		$lecteursIds = $request->request->get('lecteurs', []);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $proprietaireId = $request->request->get('proprietaire');
+            $concepteursIds = $request->request->get('concepteurs', []);
+            $lecteursIds = $request->request->get('lecteurs', []);
 
-		if ($proprietaireId) {
-		    $proprietaire = $em->getRepository(Utilisateur::class)->find($proprietaireId);
-		    if ($proprietaire) {
-		        $puProprietaire = new ProjetUtilisateur();
-		        $puProprietaire->setProjet($projet)
-		                       ->setUtilisateur($proprietaire)
-		                       ->setRole('proprietaire');
-		        $projet->addProjetUtilisateur($puProprietaire);
-		    }
-		}
+            if ($proprietaireId) {
+                $proprietaire = $em->getRepository(Utilisateur::class)->find($proprietaireId);
+                if ($proprietaire) {
+                    $puProprietaire = new ProjetUtilisateur();
+                    $puProprietaire->setProjet($projet)
+                                   ->setUtilisateur($proprietaire)
+                                   ->setRole('proprietaire');
+                    $projet->addProjetUtilisateur($puProprietaire);
+                }
+            }
 
-		foreach ($concepteursIds as $concepteurId) {
-		    $concepteur = $em->getRepository(Utilisateur::class)->find($concepteurId);
-		    if ($concepteur) {
-		        $pu = new ProjetUtilisateur();
-		        $pu->setProjet($projet)->setUtilisateur($concepteur)->setRole('concepteur');
-		        $projet->addProjetUtilisateur($pu);
-		    }
-		}
+            foreach ($concepteursIds as $concepteurId) {
+                $concepteur = $em->getRepository(Utilisateur::class)->find($concepteurId);
+                if ($concepteur) {
+                    $pu = new ProjetUtilisateur();
+                    $pu->setProjet($projet)->setUtilisateur($concepteur)->setRole('concepteur');
+                    $projet->addProjetUtilisateur($pu);
+                }
+            }
 
-		foreach ($lecteursIds as $lecteurId) {
-		    $lecteur = $em->getRepository(Utilisateur::class)->find($lecteurId);
-		    if ($lecteur) {
-		        $pu = new ProjetUtilisateur();
-		        $pu->setProjet($projet)->setUtilisateur($lecteur)->setRole('lecteur');
-		        $projet->addProjetUtilisateur($pu);
-		    }
-		}
+            foreach ($lecteursIds as $lecteurId) {
+                $lecteur = $em->getRepository(Utilisateur::class)->find($lecteurId);
+                if ($lecteur) {
+                    $pu = new ProjetUtilisateur();
+                    $pu->setProjet($projet)->setUtilisateur($lecteur)->setRole('lecteur');
+                    $projet->addProjetUtilisateur($pu);
+                }
+            }
 
-		$projet->setDateHeureDerniereModification(new \DateTime());
-		$this->importCataloguesFromModele($projet, $em); // Appel à la méthode factorisée
-		$em->persist($projet);
-		$em->flush();
+            $projet->setDateHeureDerniereModification(new \DateTime());
+            $this->importCataloguesFromModele($projet, $em);
+            $em->persist($projet);
+            $em->flush();
 
-		$this->addFlash('success', 'Projet créé avec succès.');
-		return $this->redirectToRoute('projet_list');
-	    }
+            $this->addFlash('success', 'Projet créé avec succès.');
+            return $this->redirectToRoute('projet_list');
+        }
 
-	    $utilisateurs = $em->getRepository(Utilisateur::class)->findAll();
+        $utilisateurs = $em->getRepository(Utilisateur::class)->findAll();
 
-	    return $this->render('projet/new.html.twig', [
-		'form' => $form->createView(),
-		'utilisateurs' => $utilisateurs,
-	    ]);
-	}
+        return $this->render('projet/new.html.twig', [
+            'form' => $form->createView(),
+            'utilisateurs' => $utilisateurs,
+        ]);
+    }
+
     #[Route('/{id}/edit', name: 'projet_edit', methods: ['GET', 'POST'])]
     #[IsGranted('ROLE_ADMIN')]
     public function edit(Request $request, Projet $projet, EntityManagerInterface $em): Response
@@ -230,38 +229,38 @@ class ProjetController extends AbstractController
         ]);
     }
 
-	#[Route('/mes-projets/new', name: 'projet_mes_projets_new', methods: ['GET', 'POST'])]
-	public function mesProjetsNew(Request $request, EntityManagerInterface $em): Response
-	{
-	    $utilisateur = $this->getUser();
-	    if (!$utilisateur) {
-		return $this->redirectToRoute('login');
-	    }
+    #[Route('/mes-projets/new', name: 'projet_mes_projets_new', methods: ['GET', 'POST'])]
+    public function mesProjetsNew(Request $request, EntityManagerInterface $em): Response
+    {
+        $utilisateur = $this->getUser();
+        if (!$utilisateur) {
+            return $this->redirectToRoute('login');
+        }
 
-	    $projet = new Projet();
-	    $form = $this->createForm(ProjetType::class, $projet);
-	    $form->handleRequest($request);
+        $projet = new Projet();
+        $form = $this->createForm(ProjetType::class, $projet);
+        $form->handleRequest($request);
 
-	    if ($form->isSubmitted() && $form->isValid()) {
-		$pu = new ProjetUtilisateur();
-		$pu->setProjet($projet)
-		   ->setUtilisateur($utilisateur)
-		   ->setRole('proprietaire');
+        if ($form->isSubmitted() && $form->isValid()) {
+            $pu = new ProjetUtilisateur();
+            $pu->setProjet($projet)
+               ->setUtilisateur($utilisateur)
+               ->setRole('proprietaire');
 
-		$this->importCataloguesFromModele($projet, $em); // Appel à la méthode factorisée
+            $this->importCataloguesFromModele($projet, $em);
 
-		$em->persist($projet);
-		$em->persist($pu);
-		$em->flush();
+            $em->persist($projet);
+            $em->persist($pu);
+            $em->flush();
 
-		$this->addFlash('success', 'Projet créé avec succès.');
-		return $this->redirectToRoute('projet_mes_projets');
-	    }
+            $this->addFlash('success', 'Projet créé avec succès.');
+            return $this->redirectToRoute('projet_mes_projets');
+        }
 
-	    return $this->render('projet/mes_projets_new.html.twig', [
-		'form' => $form->createView(),
-	    ]);
-	}
+        return $this->render('projet/mes_projets_new.html.twig', [
+            'form' => $form->createView(),
+        ]);
+    }
 
     #[Route('/{id}/recrutement', name: 'projet_recrutement', methods: ['GET', 'POST'])]
     public function recrutement(Request $request, Projet $projet, EntityManagerInterface $em): Response
@@ -433,113 +432,105 @@ class ProjetController extends AbstractController
         ]);
     }
     
-	private function importCataloguesFromModele(Projet $projet, EntityManagerInterface $em): void
-	{
-	    // Importation du catalogue des câbles
-	    $modeleCables = $em->getRepository(CatalogueModeleCables::class)->findAll();
-	    foreach ($modeleCables as $modele) {
-		$projetCable = new CatalogueProjetCables();
-		$projetCable->setProjet($projet)
-		            ->setNom($modele->getNom())
-		            ->setNombreConducteursMax($modele->getNombreConducteursMax())
-		            ->setPrixUnitaire($modele->getPrixUnitaire())
-		            ->setType($modele->getType());
-		$em->persist($projetCable);
-		$projet->addCatalogueProjetCable($projetCable);
-	    }
+    private function importCataloguesFromModele(Projet $projet, EntityManagerInterface $em): void
+    {
+        // Importation du catalogue des câbles
+        $modeleCables = $em->getRepository(CatalogueModeleCables::class)->findAll();
+        foreach ($modeleCables as $modele) {
+            $projetCable = new CatalogueProjetCables();
+            $projetCable->setProjet($projet)
+                        ->setNom($modele->getNom())
+                        ->setNbConducteurs($modele->getNbConducteurs())
+                        ->setPrixUnitaire($modele->getPrixUnitaire())
+                        ->setType($modele->getType());
+            $em->persist($projetCable);
+            $projet->addCatalogueProjetCable($projetCable);
+        }
 
-	    // Importation du catalogue des connecteurs
-	    $modeleConnecteurs = $em->getRepository(CatalogueModeleConnecteurs::class)->findAll();
-	    foreach ($modeleConnecteurs as $modele) {
-		$projetConnecteur = new CatalogueProjetConnecteurs();
-		$projetConnecteur->setProjet($projet)
-		                 ->setNom($modele->getNom())
-		                 ->setType($modele->getType())
-		                 ->setNombreContacts($modele->getNombreContacts())
-		                 ->setPrixUnitaire($modele->getPrixUnitaire());
-		$em->persist($projetConnecteur);
-		$projet->addCatalogueProjetConnecteur($projetConnecteur);
-	    }
+        // Importation du catalogue des connecteurs
+        $modeleConnecteurs = $em->getRepository(CatalogueModeleConnecteurs::class)->findAll();
+        foreach ($modeleConnecteurs as $modele) {
+            $projetConnecteur = new CatalogueProjetConnecteurs();
+            $projetConnecteur->setProjet($projet)
+                             ->setNom($modele->getNom())
+                             ->setType($modele->getType())
+                             ->setNombreContacts($modele->getNombreContacts())
+                             ->setPrixUnitaire($modele->getPrixUnitaire());
+            $em->persist($projetConnecteur);
+            $projet->addCatalogueProjetConnecteur($projetConnecteur);
+        }
 
-	    // Importation du catalogue des borniers
-	    $modeleBorniers = $em->getRepository(CatalogueModeleBorniers::class)->findAll();
-	    foreach ($modeleBorniers as $modele) {
-		$projetBornier = new CatalogueProjetBorniers();
-		$projetBornier->setProjet($projet)
-		              ->setNom($modele->getNom())
-		              ->setNombreBornes($modele->getNombreBornes())
-		              ->setCaracteristiques($modele->getCaracteristiques())
-		              ->setPrixUnitaire($modele->getPrixUnitaire());
-		$em->persist($projetBornier);
-		$projet->addCatalogueProjetBornier($projetBornier);
-	    }
-	}
+        // Importation du catalogue des borniers
+        $modeleBorniers = $em->getRepository(CatalogueModeleBorniers::class)->findAll();
+        foreach ($modeleBorniers as $modele) {
+            $projetBornier = new CatalogueProjetBorniers();
+            $projetBornier->setProjet($projet)
+                          ->setNom($modele->getNom())
+                          ->setNombreBornes($modele->getNombreBornes())
+                          ->setCaracteristiques($modele->getCaracteristiques())
+                          ->setPrixUnitaire($modele->getPrixUnitaire());
+            $em->persist($projetBornier);
+            $projet->addCatalogueProjetBornier($projetBornier);
+        }
+    }
 
-	#[Route('/{id}/export-xml', name: 'projet_export_xml', methods: ['GET'])]
-	public function exportToXml(Projet $projet, EntityManagerInterface $em): Response
-	{
-	    $utilisateur = $this->getUser();
-	    if (!$utilisateur) {
-		return $this->redirectToRoute('login');
-	    }
+    #[Route('/{id}/export-xml', name: 'projet_export_xml', methods: ['GET'])]
+    public function exportToXml(Projet $projet, EntityManagerInterface $em): Response
+    {
+        $utilisateur = $this->getUser();
+        if (!$utilisateur) {
+            return $this->redirectToRoute('login');
+        }
 
-	    // Vérification des autorisations
-	    $isAuthorized = $projet->getProjetUtilisateurs()->exists(function ($key, $pu) use ($utilisateur) {
-		return $pu instanceof ProjetUtilisateur && $pu->getUtilisateur() && $pu->getUtilisateur()->getId() === $utilisateur->getId();
-	    });
+        $isAuthorized = $projet->getProjetUtilisateurs()->exists(function ($key, $pu) use ($utilisateur) {
+            return $pu instanceof ProjetUtilisateur && $pu->getUtilisateur() && $pu->getUtilisateur()->getId() === $utilisateur->getId();
+        });
 
-	    if (!$isAuthorized) {
-		throw $this->createAccessDeniedException('Vous n’avez pas accès à ce projet.');
-	    }
+        if (!$isAuthorized) {
+            throw $this->createAccessDeniedException('Vous n’avez pas accès à ce projet.');
+        }
 
-	    // Création du document XML
-	    $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><projet></projet>');
-	    $xml->addAttribute('id', $projet->getId());
-	    $xml->addChild('nom', htmlspecialchars($projet->getNom()));
-	    $xml->addChild('dateCreation', $projet->getDateHeureDerniereModification()->format('c'));
+        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><projet></projet>');
+        $xml->addAttribute('id', $projet->getId());
+        $xml->addChild('nom', htmlspecialchars($projet->getNom()));
+        $xml->addChild('dateCreation', $projet->getDateHeureDerniereModification()->format('c'));
 
-	    // Export des câbles
-	    $cablesNode = $xml->addChild('catalogueCables');
-	    foreach ($projet->getCatalogueProjetCables() as $cable) {
-		$cableNode = $cablesNode->addChild('cable');
-		$cableNode->addAttribute('id', $cable->getId());
-		$cableNode->addChild('nom', htmlspecialchars($cable->getNom()));
-		$cableNode->addChild('type', htmlspecialchars($cable->getType()));
-		$cableNode->addChild('nombreConducteursMax', $cable->getNombreConducteursMax());
-		$cableNode->addChild('prixUnitaire', number_format($cable->getPrixUnitaire(), 2, '.', ''));
-	    }
+        $cablesNode = $xml->addChild('catalogueCables');
+        foreach ($projet->getCatalogueProjetCables() as $cable) {
+            $cableNode = $cablesNode->addChild('cable');
+            $cableNode->addAttribute('id', $cable->getId());
+            $cableNode->addChild('nom', htmlspecialchars($cable->getNom()));
+            $cableNode->addChild('type', htmlspecialchars($cable->getType()));
+            $cableNode->addChild('nbConducteurs', $cable->getNbConducteurs());
+            $cableNode->addChild('prixUnitaire', number_format($cable->getPrixUnitaire(), 2, '.', ''));
+        }
 
-	    // Export des connecteurs
-	    $connecteursNode = $xml->addChild('catalogueConnecteurs');
-	    foreach ($projet->getCatalogueProjetConnecteurs() as $connecteur) {
-		$connecteurNode = $connecteursNode->addChild('connecteur');
-		$connecteurNode->addAttribute('id', $connecteur->getId());
-		$connecteurNode->addChild('nom', htmlspecialchars($connecteur->getNom()));
-		$connecteurNode->addChild('type', htmlspecialchars($connecteur->getType()));
-		$connecteurNode->addChild('nombreContacts', $connecteur->getNombreContacts());
-		$connecteurNode->addChild('prixUnitaire', number_format($connecteur->getPrixUnitaire(), 2, '.', ''));
-	    }
+        $connecteursNode = $xml->addChild('catalogueConnecteurs');
+        foreach ($projet->getCatalogueProjetConnecteurs() as $connecteur) {
+            $connecteurNode = $connecteursNode->addChild('connecteur');
+            $connecteurNode->addAttribute('id', $connecteur->getId());
+            $connecteurNode->addChild('nom', htmlspecialchars($connecteur->getNom()));
+            $connecteurNode->addChild('type', htmlspecialchars($connecteur->getType()));
+            $connecteurNode->addChild('nombreContacts', $connecteur->getNombreContacts());
+            $connecteurNode->addChild('prixUnitaire', number_format($connecteur->getPrixUnitaire(), 2, '.', ''));
+        }
 
-	    // Export des borniers
-	    $borniersNode = $xml->addChild('catalogueBorniers');
-	    foreach ($projet->getCatalogueProjetBorniers() as $bornier) {
-		$bornierNode = $borniersNode->addChild('bornier');
-		$bornierNode->addAttribute('id', $bornier->getId());
-		$bornierNode->addChild('nom', htmlspecialchars($bornier->getNom()));
-		$bornierNode->addChild('nombreBornes', $bornier->getNombreBornes());
-		$bornierNode->addChild('caracteristiques', htmlspecialchars($bornier->getCaracteristiques() ?? ''));
-		$bornierNode->addChild('prixUnitaire', number_format($bornier->getPrixUnitaire(), 2, '.', ''));
-	    }
+        $borniersNode = $xml->addChild('catalogueBorniers');
+        foreach ($projet->getCatalogueProjetBorniers() as $bornier) {
+            $bornierNode = $borniersNode->addChild('bornier');
+            $bornierNode->addAttribute('id', $bornier->getId());
+            $bornierNode->addChild('nom', htmlspecialchars($bornier->getNom()));
+            $bornierNode->addChild('nombreBornes', $bornier->getNombreBornes());
+            $bornierNode->addChild('caracteristiques', htmlspecialchars($bornier->getCaracteristiques() ?? ''));
+            $bornierNode->addChild('prixUnitaire', number_format($bornier->getPrixUnitaire(), 2, '.', ''));
+        }
 
-	    // Génération du contenu XML
-	    $xmlContent = $xml->asXML();
+        $xmlContent = $xml->asXML();
 
-	    // Réponse avec fichier téléchargeable
-	    $response = new Response($xmlContent);
-	    $response->headers->set('Content-Type', 'application/xml');
-	    $response->headers->set('Content-Disposition', 'attachment; filename="projet_' . $projet->getId() . '_export.xml"');
+        $response = new Response($xmlContent);
+        $response->headers->set('Content-Type', 'application/xml');
+        $response->headers->set('Content-Disposition', 'attachment; filename="projet_' . $projet->getId() . '_export.xml"');
 
-	    return $response;
-	}
-
+        return $response;
+    }
 }

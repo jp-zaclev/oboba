@@ -1,53 +1,47 @@
 <?php
-// src/Controller/CatalogueModeleConnecteursController.php
 namespace App\Controller;
 
 use App\Entity\CatalogueModeleConnecteurs;
-use App\Form\CatalogueModeleConnecteursType;
 use App\Form\CatalogueModeleConnecteursFilterType;
-use App\Repository\CatalogueModeleConnecteursRepository;
+use App\Form\CatalogueModeleConnecteursType;
+use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Form\FormFactoryInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 /**
  * @Route("/admin/catalogue/modele/connecteurs")
  * @IsGranted("ROLE_ADMIN")
  */
-class CatalogueModeleConnecteursController extends AbstractController
+class CatalogueModeleConnecteursController extends BaseController
 {
-    private $repository;
+    use FilterHelperTrait;
 
-    public function __construct(CatalogueModeleConnecteursRepository $repository)
-    {
-        $this->repository = $repository;
-    }
-
-   /**
-     * @Route("/", name="catalogue_modele_connecteurs_list", methods={"GET", "POST"})
-     */
-    public function list(Request $request, PaginatorInterface $paginator): Response
-    {
+    #[Route("/", name: "catalogue_modele_connecteurs_list", methods: ["GET", "POST"])]
+    public function list(
+        Request $request,
+        EntityManagerInterface $em,
+        FormFactoryInterface $formFactory,
+        PaginatorInterface $paginator
+    ): Response {
         $session = $request->getSession();
         $selectedIds = $session->get('selected_modele_connecteurs', []);
 
-        // Gestion des suppressions multiples via POST
         if ($request->isMethod('POST')) {
             if (empty($selectedIds)) {
                 $this->addFlash('warning', 'Aucun élément sélectionné pour la suppression.');
             } else {
-                $entityManager = $this->getDoctrine()->getManager();
-                $itemsToDelete = $this->repository->findBy(['id' => $selectedIds]);
+                $itemsToDelete = $em->getRepository(CatalogueModeleConnecteurs::class)->findBy(['id' => $selectedIds]);
                 if (empty($itemsToDelete)) {
                     $this->addFlash('error', 'Aucun élément valide trouvé pour la suppression.');
                 } else {
                     foreach ($itemsToDelete as $item) {
-                        $entityManager->remove($item);
+                        $em->remove($item);
                     }
-                    $entityManager->flush();
+                    $em->flush();
                     $this->addFlash('success', 'Modèles de connecteurs sélectionnés supprimés avec succès.');
                     $session->set('selected_modele_connecteurs', []);
                 }
@@ -55,7 +49,6 @@ class CatalogueModeleConnecteursController extends AbstractController
             return $this->redirectToRoute('catalogue_modele_connecteurs_list');
         }
 
-        // Mise à jour des sélections via GET (AJAX)
         if ($request->query->has('toggle_selection')) {
             $itemId = $request->query->get('item_id');
             if (in_array($itemId, $selectedIds)) {
@@ -67,10 +60,10 @@ class CatalogueModeleConnecteursController extends AbstractController
             return $this->json(['success' => true, 'selected' => $selectedIds]);
         }
 
-        $filterForm = $this->createForm(CatalogueModeleConnecteursFilterType::class);
+        $filterForm = $formFactory->create(CatalogueModeleConnecteursFilterType::class);
         $filterForm->handleRequest($request);
 
-        $qb = $this->repository->createQueryBuilder('c');
+        $qb = $em->getRepository(CatalogueModeleConnecteurs::class)->createQueryBuilder('c');
 
         if ($filterForm->isSubmitted() && $filterForm->isValid()) {
             $data = $filterForm->getData();
@@ -80,21 +73,15 @@ class CatalogueModeleConnecteursController extends AbstractController
             if ($data['type']) {
                 $qb->andWhere('c.type LIKE :type')->setParameter('type', '%' . $data['type'] . '%');
             }
-            if ($data['nombreContactsMin']) {
-                $qb->andWhere('c.nombreContacts >= :contactsMin')->setParameter('contactsMin', $data['nombreContactsMin']);
+            if ($data['nombreContacts'] !== null && $data['nombreContacts'] !== '') {
+                $this->applyNumericFilter($qb, 'c.nombreContacts', $data['nombreContacts'], 'contacts');
             }
-            if ($data['nombreContactsMax']) {
-                $qb->andWhere('c.nombreContacts <= :contactsMax')->setParameter('contactsMax', $data['nombreContactsMax']);
-            }
-            if ($data['prixUnitaireMin']) {
-                $qb->andWhere('c.prixUnitaire >= :prixMin')->setParameter('prixMin', $data['prixUnitaireMin']);
-            }
-            if ($data['prixUnitaireMax']) {
-                $qb->andWhere('c.prixUnitaire <= :prixMax')->setParameter('prixMax', $data['prixUnitaireMax']);
+            if ($data['prixUnitaire'] !== null && $data['prixUnitaire'] !== '') {
+                $this->applyNumericFilter($qb, 'c.prixUnitaire', $data['prixUnitaire'], 'prix');
             }
         }
 
-        $connecteurs = $paginator->paginate(
+        $items = $paginator->paginate(
             $qb->getQuery(),
             $request->query->getInt('page', 1),
             10,
@@ -105,26 +92,22 @@ class CatalogueModeleConnecteursController extends AbstractController
         );
 
         return $this->render('catalogue_modele_connecteurs/list.html.twig', [
-            'connecteurs' => $connecteurs,
+            'items' => $items,
             'filter_form' => $filterForm->createView(),
             'selected_ids' => $selectedIds,
         ]);
     }
 
-    /**
-     * @Route("/new", name="catalogue_modele_connecteurs_new", methods={"GET", "POST"})
-     */
-    public function new(Request $request): Response
+    #[Route("/new", name: "catalogue_modele_connecteurs_new", methods: ["GET", "POST"])]
+    public function new(Request $request, EntityManagerInterface $em, FormFactoryInterface $formFactory): Response
     {
         $connecteur = new CatalogueModeleConnecteurs();
-        $form = $this->createForm(CatalogueModeleConnecteursType::class, $connecteur);
+        $form = $formFactory->create(CatalogueModeleConnecteursType::class, $connecteur);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager = $this->getDoctrine()->getManager();
-            $entityManager->persist($connecteur);
-            $entityManager->flush();
-
+            $em->persist($connecteur);
+            $em->flush();
             $this->addFlash('success', 'Modèle de connecteur ajouté avec succès.');
             return $this->redirectToRoute('catalogue_modele_connecteurs_list');
         }
@@ -134,17 +117,18 @@ class CatalogueModeleConnecteursController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/{id}/edit", name="catalogue_modele_connecteurs_edit", methods={"GET", "POST"})
-     */
-    public function edit(Request $request, CatalogueModeleConnecteurs $connecteur): Response
-    {
-        $form = $this->createForm(CatalogueModeleConnecteursType::class, $connecteur);
+    #[Route("/{id}/edit", name: "catalogue_modele_connecteurs_edit", methods: ["GET", "POST"])]
+    public function edit(
+        CatalogueModeleConnecteurs $connecteur,
+        Request $request,
+        EntityManagerInterface $em,
+        FormFactoryInterface $formFactory
+    ): Response {
+        $form = $formFactory->create(CatalogueModeleConnecteursType::class, $connecteur);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
-
+            $em->flush();
             $this->addFlash('success', 'Modèle de connecteur modifié avec succès.');
             return $this->redirectToRoute('catalogue_modele_connecteurs_list');
         }
@@ -155,16 +139,12 @@ class CatalogueModeleConnecteursController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/{id}", name="catalogue_modele_connecteurs_delete", methods={"POST"})
-     */
-    public function delete(Request $request, CatalogueModeleConnecteurs $connecteur): Response
+    #[Route("/{id}", name: "catalogue_modele_connecteurs_delete", methods: ["POST"])]
+    public function delete(CatalogueModeleConnecteurs $connecteur, Request $request, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$connecteur->getId(), $request->request->get('_token'))) {
-            $entityManager = $this->getDoctrine()->getManager();
-            $entityManager->remove($connecteur);
-            $entityManager->flush();
-
+        if ($this->isCsrfTokenValid('delete' . $connecteur->getId(), $request->request->get('_token'))) {
+            $em->remove($connecteur);
+            $em->flush();
             $this->addFlash('success', 'Modèle de connecteur supprimé avec succès.');
         } else {
             $this->addFlash('error', 'Token CSRF invalide.');

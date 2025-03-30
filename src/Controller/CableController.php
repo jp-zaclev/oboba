@@ -1,4 +1,5 @@
 <?php
+// src/Controller/CableController.php
 namespace App\Controller;
 
 use App\Entity\Cable;
@@ -222,16 +223,23 @@ class CableController extends BaseController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $catalogue = $cable->getCatalogueProjetCables();
-            if ($catalogue && $catalogue->getNombreConducteursMax() > 0) {
-                $nombreConducteursMax = $catalogue->getNombreConducteursMax();
-                for ($i = 1; $i <= $nombreConducteursMax; $i++) {
+            if ($catalogue && $catalogue->getCatalogueConducteurs()->count() > 0) {
+                foreach ($catalogue->getCatalogueConducteurs() as $catalogueConducteur) {
                     $conducteur = new Conducteur();
-                    $conducteur->setAttribut((string)$i); // Attribut = "1", "2", "3", etc.
+                    $conducteur->setAttribut($catalogueConducteur->getAttribut());
+                    $cable->addConducteur($conducteur);
+                }
+            } elseif ($catalogue && $catalogue->getNbConducteurs() > 0) {
+                // Fallback si aucun CatalogueConducteur n'est défini
+                $nbConducteursMax = $catalogue->getNbConducteurs();
+                for ($i = 1; $i <= $nbConducteursMax; $i++) {
+                    $conducteur = new Conducteur();
+                    $conducteur->setAttribut((string)$i);
                     $cable->addConducteur($conducteur);
                 }
             }
 
-            $em->persist($cable); // Persiste le câble et ses conducteurs grâce à cascade: ['persist']
+            $em->persist($cable);
             $em->flush();
             $this->addFlash('success', 'Câble ajouté avec succès');
             return $this->redirectToRoute('cable_list', ['projetId' => $projet->getId()]);

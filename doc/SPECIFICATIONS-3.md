@@ -1,6 +1,6 @@
 # Spécifications du logiciel Oboba
 
-*Date : 23 mars 2025*  
+*Date : 27 mars 2025*  
 *Projet : Gestion des câbles et connecteurs dans une application Symfony offline*
 
 ## Table des matières
@@ -53,7 +53,7 @@
 
 Le logiciel Oboba vise à simplifier la conception, la gestion et la documentation des câblages industriels en offrant une interface intuitive et une gestion fine des droits d’accès. Ce document décrit les spécifications détaillées d’un logiciel de conception et de gestion de câblage industriel, incluant les câbles, borniers, et connecteurs, ainsi que leurs composants (conducteurs, bornes, contacts) et signaux (analogiques ou numériques).
 
-L’implémentation actuelle se concentre sur la gestion des utilisateurs, projets, câbles, connecteurs, et catalogues modèles dans une application Symfony offline, avec des fonctionnalités de liste paginée, ajout, modification, suppression, filtrage, et exportation en CSV. Depuis le 23 mars 2025, le schéma de la base de données est consolidé, les catalogues modèles disposent de CRUD complets, et les listes de câbles et connecteurs ont été améliorées avec des contrôles d’accès robustes et une navigation optimisée.
+L’implémentation actuelle se concentre sur la gestion des utilisateurs, projets, câbles, connecteurs, et catalogues modèles dans une application Symfony offline, avec des fonctionnalités de liste paginée, ajout, modification, suppression, filtrage, et exportation en CSV. Depuis le 23 mars 2025, le schéma de la base de données est consolidé, les catalogues modèles disposent de CRUD complets, et les listes de câbles et connecteurs ont été améliorées avec des contrôles d’accès robustes et une navigation optimisée. Au 27 mars 2025, des ajustements ont été apportés aux entités `CatalogueModeleCables` et `CatalogueProjetCables` pour refléter un nombre exact de conducteurs.
 
 ---
 
@@ -112,8 +112,9 @@ L’implémentation actuelle se concentre sur la gestion des utilisateurs, proje
   - `id` : `INT PRIMARY KEY AUTO_INCREMENT`
   - `nom` : `VARCHAR(255) NOT NULL UNIQUE`
   - `type` : `VARCHAR(50) NOT NULL` (ex. "coaxial")
-  - `nombre_conducteurs_max` : `INT NOT NULL`
+  - `nombre_conducteurs` : `INT NOT NULL` (anciennement `nombre_conducteurs_max`)
   - `prix_unitaire` : `DECIMAL(10,2) NOT NULL`
+- **Note** : Renommé au 27 mars 2025 pour refléter le nombre exact de conducteurs plutôt qu’un maximum.
 - **Statut** : Implémenté avec CRUD complet pour les administrateurs.
 
 ### Catalogue Projet des Câbles
@@ -122,10 +123,11 @@ L’implémentation actuelle se concentre sur la gestion des utilisateurs, proje
   - `id` : `INT PRIMARY KEY AUTO_INCREMENT`
   - `id_projet` : `INT NOT NULL` (FK vers `projet(id)` avec `ON DELETE CASCADE`)
   - `nom` : `VARCHAR(255) NOT NULL`
-  - `nombre_conducteurs` : `INT NOT NULL`
+  - `nombre_conducteurs` : `INT NOT NULL` (anciennement `nombre_conducteurs_max`)
   - `prix_unitaire` : `DECIMAL(10,2) NOT NULL`
 - **Relations** : Référencé par `Cable` (`ON DELETE SET NULL`).
 - **Règles** : Ne peut être supprimé directement, uniquement via le projet.
+- **Note** : Renommé au 27 mars 2025 pour refléter le nombre exact de conducteurs plutôt qu’un maximum.
 - **Statut** : Implémenté dans le schéma et utilisé par `Cable`.
 
 ### Câble
@@ -416,6 +418,7 @@ L’implémentation actuelle se concentre sur la gestion des utilisateurs, proje
 
 ### Contraintes et Sécurité
 - **Contrôle d’accès** : Factorisé dans `BaseController::checkProjectAccess` avec DQL explicite pour éviter les erreurs de lazy loading.
+- **Mise à jour au 27 mars 2025** : Renommage de `nombreConducteursMax` en `nombreConducteurs` dans `CatalogueModeleCables` et `CatalogueProjetCables`, avec migrations appliquées (`ALTER TABLE` pour les tables correspondantes).
 - *(Autres contraintes inchangées)*
 
 ---
@@ -433,13 +436,15 @@ L’implémentation actuelle se concentre sur la gestion des utilisateurs, proje
 
 ## Conclusion
 
-L’implémentation au 23 mars 2025 couvre la gestion des utilisateurs, projets, câbles, connecteurs, et catalogues modèles avec des CRUD complets, des filtres, et une interface améliorée. Les corrections incluent :
+L’implémentation au 27 mars 2025 couvre la gestion des utilisateurs, projets, câbles, connecteurs, et catalogues modèles avec des CRUD complets, des filtres, et une interface améliorée. Les corrections et mises à jour incluent :
 - Contrôle d’accès robuste via DQL dans `CableController` et `ConnecteurController`.
 - Ajustement des filtres dans `CableFilterType` et `ConnecteurFilterType`.
 - Ajout de boutons "Retour à <nom du projet>" dans les listes de câbles et connecteurs.
+- Renommage de `nombreConducteursMax` en `nombreConducteurs` dans `CatalogueModeleCables` et `CatalogueProjetCables` pour refléter un nombre exact de conducteurs, avec migrations appliquées.
 
 Les prochaines étapes incluent :
 - Finalisation de la page projet avec toutes les listes et placeholders.
 - Ajout des CRUD pour `WireSignal`, `Bornier`, `Conducteur`, `Contact`, `Equipement`.
 - Intégration des catalogues projet avec CRUD direct (optionnel).
+- Mise à jour de l’IHM pour refléter le renommage de `nombreConducteurs` dans les formulaires et templates.
 - Développement des fonctionnalités avancées (propagation des signaux, export/import, rapports).

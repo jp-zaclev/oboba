@@ -1,123 +1,57 @@
-{% extends 'layout/project_layout.html.twig' %}
+{% extends 'base_list_catalogue.html.twig' %}
 
-{% set container_margin = false %}
+{% block list_title %}Catalogue des modèles de connecteurs{% endblock %}
 
-{% block title %}Catalogue des modèles de connecteurs - Oboba{% endblock %}
+{% block page_header %}Catalogue des modèles de connecteurs{% endblock %}
 
-{% block page_content %}
-    <h1 class="text-white">Catalogue des modèles de connecteurs</h1>
+{% block item_type %}connecteur(s){% endblock %}
 
-    <div class="mb-3">
-        <div class="row g-2">
-            <div class="col-auto">
-                <a href="{{ path('catalogue_modele_connecteurs_new') }}" class="btn btn-primary">Ajouter un modèle de connecteur</a>
-            </div>
-        </div>
+{% block specific_buttons %}
+    <div class="col-auto">
+        <a href="{{ path('catalogue_modele_connecteurs_new') }}" class="btn btn-primary">Ajouter un modèle de connecteur</a>
     </div>
-
-    {{ form_start(filter_form, {'method': 'GET'}) }}
-        <div class="row mb-3">
-            <div class="col">{{ form_row(filter_form.nom, {'attr': {'class': 'form-control'}}) }}</div>
-            <div class="col">{{ form_row(filter_form.type, {'attr': {'class': 'form-control'}}) }}</div>
-            <div class="col">{{ form_row(filter_form.nombreContactsMin, {'attr': {'class': 'form-control'}}) }}</div>
-            <div class="col">{{ form_row(filter_form.nombreContactsMax, {'attr': {'class': 'form-control'}}) }}</div>
-            <div class="col">{{ form_row(filter_form.prixUnitaireMin, {'attr': {'class': 'form-control'}}) }}</div>
-            <div class="col">{{ form_row(filter_form.prixUnitaireMax, {'attr': {'class': 'form-control'}}) }}</div>
-            <div class="col">
-                <button type="submit" class="btn btn-primary mt-4">Filtrer</button>
-            </div>
-        </div>
-    {{ form_end(filter_form) }}
-
-    {% if connecteurs is empty %}
-        <p class="text-white">Aucun modèle de connecteur disponible pour le moment.</p>
-    {% else %}
-        <form method="post" id="delete-form" onsubmit="return confirm('Voulez-vous vraiment supprimer les modèles sélectionnés ?');">
-            <div class="mb-3">
-                <button type="submit" class="btn btn-danger" id="delete-selected" disabled>Effacer les éléments sélectionnés</button>
-            </div>
-
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th><input type="checkbox" id="select-all"></th>
-                        <th>{{ knp_pagination_sortable(connecteurs, 'Nom', 'c.nom') }}</th>
-                        <th>{{ knp_pagination_sortable(connecteurs, 'Type', 'c.type') }}</th>
-                        <th>{{ knp_pagination_sortable(connecteurs, 'Nombre de contacts', 'c.nombreContacts') }}</th>
-                        <th>{{ knp_pagination_sortable(connecteurs, 'Prix unitaire', 'c.prixUnitaire') }}</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for connecteur in connecteurs %}
-                        <tr>
-                            <td>
-                                <input type="checkbox" name="selected_items[]" value="{{ connecteur.id }}"
-                                       class="select-item" {% if connecteur.id in selected_ids %}checked{% endif %}>
-                            </td>
-                            <td>{{ connecteur.nom }}</td>
-                            <td>{{ connecteur.type }}</td>
-                            <td>{{ connecteur.nombreContacts }}</td>
-                            <td>{{ connecteur.prixUnitaire|number_format(2, '.', ',') }}</td>
-                            <td>
-                                <a href="{{ path('catalogue_modele_connecteurs_edit', {'id': connecteur.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
-                                <form method="post" action="{{ path('catalogue_modele_connecteurs_delete', {'id': connecteur.id}) }}" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer ce modèle ?');">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ connecteur.id) }}">
-                                    <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
-                                </form>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-
-            <div class="navigation">
-                {{ knp_pagination_render(connecteurs) }}
-            </div>
-        </form>
-    {% endif %}
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const selectAll = document.getElementById('select-all');
-            const selectItems = document.querySelectorAll('.select-item');
-            const deleteButton = document.getElementById('delete-selected');
-
-            // Mettre à jour l'état du bouton "Effacer"
-            function updateDeleteButton() {
-                const checkedCount = document.querySelectorAll('.select-item:checked').length;
-                deleteButton.disabled = checkedCount === 0;
-            }
-
-            // Case "Tout sélectionner"
-            selectAll.addEventListener('change', function () {
-                selectItems.forEach(item => {
-                    item.checked = selectAll.checked;
-                    toggleSelection(item);
-                });
-                updateDeleteButton();
-            });
-
-            // Gestion des cases individuelles
-            selectItems.forEach(item => {
-                item.addEventListener('change', function () {
-                    toggleSelection(item);
-                    updateDeleteButton();
-                    selectAll.checked = document.querySelectorAll('.select-item:not(:checked)').length === 0;
-                });
-            });
-
-            // Persistance des sélections via AJAX
-            function toggleSelection(item) {
-                const itemId = item.value;
-                fetch(`{{ path('catalogue_modele_connecteurs_list') }}?toggle_selection=1&item_id=${itemId}`, {
-                    method: 'GET',
-                }).then(response => response.json())
-                  .then(data => console.log('Sélection mise à jour:', data.selected));
-            }
-
-            // Initialisation
-            updateDeleteButton();
-        });
-    </script>
 {% endblock %}
+
+{% block filter_fields %}
+    <div class="col">{{ form_row(filter_form.nom, {'attr': {'class': 'form-control'}}) }}</div>
+    <div class="col">{{ form_row(filter_form.type, {'attr': {'class': 'form-control'}}) }}</div>
+    <div class="col">{{ form_row(filter_form.nombreContacts, {'attr': {'class': 'form-control'}}) }}</div>
+    <div class="col">{{ form_row(filter_form.prixUnitaire, {'attr': {'class': 'form-control'}}) }}</div>
+{% endblock %}
+
+{% block empty_message %}Aucun modèle de connecteur disponible pour le moment.{% endblock %}
+
+{% block delete_confirm_message %}Voulez-vous vraiment supprimer les modèles sélectionnés ?{% endblock %}
+
+{% block table_headers %}
+    <th><input type="checkbox" id="select-all"></th>
+    <th>{{ knp_pagination_sortable(items, 'Nom', 'c.nom') }}</th>
+    <th>{{ knp_pagination_sortable(items, 'Type', 'c.type') }}</th>
+    <th>{{ knp_pagination_sortable(items, 'Nombre de contacts', 'c.nombreContacts') }}</th>
+    <th>{{ knp_pagination_sortable(items, 'Prix unitaire', 'c.prixUnitaire') }}</th>
+    <th>Actions</th>
+{% endblock %}
+
+{% block table_body %}
+    {% for item in items %}
+        <tr>
+            <td>
+                <input type="checkbox" name="selected_items[]" value="{{ item.id }}"
+                       class="select-item" {% if item.id in selected_ids %}checked{% endif %}>
+            </td>
+            <td>{{ item.nom }}</td>
+            <td>{{ item.type }}</td>
+            <td>{{ item.nombreContacts }}</td>
+            <td>{{ item.prixUnitaire|number_format(2, '.', ',') }}</td>
+            <td>
+                <a href="{{ path('catalogue_modele_connecteurs_edit', {'id': item.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                <form method="post" action="{{ path('catalogue_modele_connecteurs_delete', {'id': item.id}) }}" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer ce modèle ?');">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ item.id) }}">
+                    <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+{% endblock %}
+
+{% block toggle_selection_path %}{{ path('catalogue_modele_connecteurs_list') }}{% endblock %}

@@ -2,7 +2,9 @@
 namespace App\Form;
 
 use App\Entity\CatalogueModeleBorniers;
+use App\Entity\CatalogueBorne;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -46,6 +48,18 @@ class CatalogueModeleBorniersType extends AbstractType
                     new PositiveOrZero(['message' => 'Le prix doit être positif ou zéro']),
                 ],
                 'attr' => ['step' => '0.01', 'placeholder' => 'Ex: 1.20'],
+            ])
+            ->add('catalogueBornes', CollectionType::class, [
+                'label' => 'Bornes',
+                'entry_type' => CatalogueBorneType::class,
+                'entry_options' => [
+                    'label' => 'Attribut',
+                    'attr' => ['placeholder' => 'Ex: Vis 2.5mm²'],
+                ],
+                'allow_add' => true,
+                'allow_delete' => true,
+                'by_reference' => false, // Nécessaire pour persister les modifications
+                'prototype' => true, // Permet l'ajout dynamique dans le template
             ]);
     }
 

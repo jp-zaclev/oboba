@@ -4,6 +4,7 @@ namespace App\Controller;
 use App\Entity\CatalogueProjetCables;
 use App\Entity\Projet;
 use App\Entity\CatalogueModeleCables;
+use App\Entity\CatalogueConducteur;
 use App\Form\CatalogueProjetCablesFilterType;
 use App\Form\CatalogueProjetCablesType;
 use App\Repository\ProjetRepository;
@@ -16,111 +17,103 @@ use Knp\Component\Pager\PaginatorInterface;
 
 class CatalogueProjetCablesController extends BaseController
 {
-	#[Route('/projet/{projetId}/catalogue-cables', name: 'catalogue_projet_cables_list', methods: ['GET', 'POST'])]
-	public function list(
-	    int $projetId,
-	    ProjetRepository $projetRepository,
-	    Request $request,
-	    EntityManagerInterface $em,
-	    FormFactoryInterface $formFactory,
-	    PaginatorInterface $paginator
-	): Response {
-	    $projet = $projetRepository->find($projetId);
-	    if (!$projet) {
-		throw $this->createNotFoundException('Projet non trouvé');
-	    }
+    use FilterHelperTrait;
 
-	    $this->checkProjectAccess($projet, $em);
-
-	    $session = $request->getSession();
-	    $selectedIds = $session->get('selected_cables_' . $projetId, []);
-
-	    // Gestion des suppressions multiples via POST
-	    if ($request->isMethod('POST') && $this->isGranted('CAN_EDIT_CABLES', $projet)) {
-		if (empty($selectedIds)) {
-		    $this->addFlash('warning', 'Aucun élément sélectionné pour la suppression.');
-		} else {
-		    $itemsToDelete = $em->getRepository(CatalogueProjetCables::class)->findBy(['id' => $selectedIds, 'projet' => $projet]);
-		    if (empty($itemsToDelete)) {
-		        $this->addFlash('error', 'Aucun élément valide trouvé pour la suppression.');
-		    } else {
-		        foreach ($itemsToDelete as $item) {
-		            $em->remove($item);
-		        }
-		        $em->flush();
-		        $this->addFlash('success', 'Câbles sélectionnés supprimés avec succès.');
-		        $session->set('selected_cables_' . $projetId, []); // Réinitialiser après suppression
-		    }
-		}
-		return $this->redirectToRoute('catalogue_projet_cables_list', ['projetId' => $projetId]);
-	    }
-
-	    // Mise à jour des sélections via GET (AJAX)
-	    if ($request->query->has('toggle_selection') && $this->isGranted('CAN_EDIT_CABLES', $projet)) {
-		$itemId = $request->query->get('item_id');
-		if (in_array($itemId, $selectedIds)) {
-		    $selectedIds = array_diff($selectedIds, [$itemId]);
-		} else {
-		    $selectedIds[] = $itemId;
-		}
-		$session->set('selected_cables_' . $projetId, $selectedIds);
-		return $this->json(['success' => true, 'selected' => $selectedIds]);
-	    }
-
-	    // Formulaire de filtre et pagination (inchangé)
-	    $filterForm = $formFactory->create(CatalogueProjetCablesFilterType::class);
-	    $filterForm->handleRequest($request);
-
-	    $qb = $em->getRepository(CatalogueProjetCables::class)->createQueryBuilder('c')
-		->where('c.projet = :projet')
-		->setParameter('projet', $projet);
-
-	    if ($filterForm->isSubmitted() && $filterForm->isValid()) {
-		$data = $filterForm->getData();
-		if ($data['nom']) {
-		    $qb->andWhere('c.nom LIKE :nom')->setParameter('nom', '%' . $data['nom'] . '%');
-		}
-		if ($data['type']) {
-		    $qb->andWhere('c.type LIKE :type')->setParameter('type', '%' . $data['type'] . '%');
-		}
-		if ($data['nombreConducteursMax'] !== null) {
-		    $qb->andWhere('c.nombreConducteursMax = :nombreConducteursMax')->setParameter('nombreConducteursMax', $data['nombreConducteursMax']);
-		}
-		if ($data['prixUnitaireMin'] !== null) {
-		    $qb->andWhere('c.prixUnitaire >= :prixUnitaireMin')->setParameter('prixUnitaireMin', $data['prixUnitaireMin']);
-		}
-		if ($data['prixUnitaireMax'] !== null) {
-		    $qb->andWhere('c.prixUnitaire <= :prixUnitaireMax')->setParameter('prixUnitaireMax', $data['prixUnitaireMax']);
-		}
-	    }
-
-	    $catalogues = $paginator->paginate(
-		$qb->getQuery(),
-		$request->query->getInt('page', 1),
-		10,
-		[
-		    'defaultSortFieldName' => 'c.nom',
-		    'defaultSortDirection' => 'asc',
-		]
-	    );
-
-	    return $this->render('catalogue_projet_cables/list.html.twig', [
-		'projet' => $projet,
-		'catalogues' => $catalogues,
-		'filter_form' => $filterForm->createView(),
-		'selected_ids' => $selectedIds,
-	    ]);
-	}
-    
-    
-    #[Route('/projet/{projetId}/catalogue-cables/new', name: 'catalogue_projet_cables_new', methods: ['GET', 'POST'])]
-    public function new(
+    #[Route('/projet/{projetId}/catalogue-cables', name: 'catalogue_projet_cables_list', methods: ['GET', 'POST'])]
+    public function list(
         int $projetId,
         ProjetRepository $projetRepository,
         Request $request,
         EntityManagerInterface $em,
-        FormFactoryInterface $formFactory
+        FormFactoryInterface $formFactory,
+        PaginatorInterface $paginator
     ): Response {
+        $projet = $projetRepository->find($projetId);
+        if (!$projet) {
+            throw $this->createNotFoundException('Projet non trouvé');
+        }
+
+        $this->checkProjectAccess($projet, $em);
+
+        $session = $request->getSession();
+        $selectedIds = $session->get('selected_cables_' . $projetId, []);
+
+        if ($request->isMethod('POST') && $this->isGranted('CAN_EDIT_CABLES', $projet)) {
+            if (empty($selectedIds)) {
+                $this->addFlash('warning', 'Aucun élément sélectionné pour la suppression.');
+            } else {
+                $itemsToDelete = $em->getRepository(CatalogueProjetCables::class)->findBy(['id' => $selectedIds, 'projet' => $projet]);
+                if (empty($itemsToDelete)) {
+                    $this->addFlash('error', 'Aucun élément valide trouvé pour la suppression.');
+                } else {
+                    foreach ($itemsToDelete as $item) {
+                        $em->remove($item);
+                    }
+                    $em->flush();
+                    $this->addFlash('success', 'Câbles sélectionnés supprimés avec succès.');
+                    $session->set('selected_cables_' . $projetId, []);
+                }
+            }
+            return $this->redirectToRoute('catalogue_projet_cables_list', ['projetId' => $projetId]);
+        }
+
+        if ($request->query->has('toggle_selection') && $this->isGranted('CAN_EDIT_CABLES', $projet)) {
+            $itemId = $request->query->get('item_id');
+            if (in_array($itemId, $selectedIds)) {
+                $selectedIds = array_diff($selectedIds, [$itemId]);
+            } else {
+                $selectedIds[] = $itemId;
+            }
+            $session->set('selected_cables_' . $projetId, $selectedIds);
+            return $this->json(['success' => true, 'selected' => $selectedIds]);
+        }
+
+        $filterForm = $formFactory->create(CatalogueProjetCablesFilterType::class);
+        $filterForm->handleRequest($request);
+
+        $qb = $em->getRepository(CatalogueProjetCables::class)->createQueryBuilder('c')
+            ->where('c.projet = :projet')
+            ->setParameter('projet', $projet)
+            ->leftJoin('c.catalogueConducteurs', 'cc')
+            ->addSelect('cc');
+
+        if ($filterForm->isSubmitted() && $filterForm->isValid()) {
+            $data = $filterForm->getData();
+            if ($data['nom']) {
+                $qb->andWhere('c.nom LIKE :nom')->setParameter('nom', '%' . $data['nom'] . '%');
+            }
+            if ($data['type']) {
+                $qb->andWhere('c.type LIKE :type')->setParameter('type', '%' . $data['type'] . '%');
+            }
+            if ($data['nbConducteurs'] !== null && $data['nbConducteurs'] !== '') {
+                $this->applyNumericFilter($qb, 'c.nbConducteurs', $data['nbConducteurs'], 'conducteurs');
+            }
+            if ($data['prixUnitaire'] !== null && $data['prixUnitaire'] !== '') {
+                $this->applyNumericFilter($qb, 'c.prixUnitaire', $data['prixUnitaire'], 'prix');
+            }
+        }
+
+        $catalogues = $paginator->paginate(
+            $qb->getQuery(),
+            $request->query->getInt('page', 1),
+            10,
+            [
+                'defaultSortFieldName' => 'c.nom',
+                'defaultSortDirection' => 'asc',
+            ]
+        );
+        
+        return $this->render('catalogue_projet_cables/list.html.twig', [
+            'projet' => $projet,
+            'items' => $catalogues,
+            'filter_form' => $filterForm->createView(),
+            'selected_ids' => $selectedIds,
+        ]);
+    }
+
+    #[Route('/projet/{projetId}/catalogue-cables/new', name: 'catalogue_projet_cables_new', methods: ['GET', 'POST'])]
+    public function new(int $projetId, Request $request, ProjetRepository $projetRepository, EntityManagerInterface $em): Response
+    {
         $projet = $projetRepository->find($projetId);
         if (!$projet) {
             throw $this->createNotFoundException('Projet non trouvé');
@@ -128,16 +121,17 @@ class CatalogueProjetCablesController extends BaseController
 
         $this->denyAccessUnlessGranted('CAN_EDIT_CABLES', $projet);
 
-        $catalogue = new CatalogueProjetCables();
-        $catalogue->setProjet($projet);
-        $form = $formFactory->create(CatalogueProjetCablesType::class, $catalogue);
+        $catalogueProjetCable = new CatalogueProjetCables();
+        $catalogueProjetCable->setProjet($projet);
+        $form = $this->createForm(CatalogueProjetCablesType::class, $catalogueProjetCable);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $em->persist($catalogue);
+            $em->persist($catalogueProjetCable);
             $em->flush();
-            $this->addFlash('success', 'Câble ajouté au catalogue avec succès');
-            return $this->redirectToRoute('catalogue_projet_cables_list', ['projetId' => $projet->getId()]);
+            $this->addFlash('success', 'Type de câble ajouté avec succès.');
+
+            return $this->redirectToRoute('catalogue_projet_cables_list', ['projetId' => $projetId]);
         }
 
         return $this->render('catalogue_projet_cables/new.html.twig', [
@@ -146,100 +140,96 @@ class CatalogueProjetCablesController extends BaseController
         ]);
     }
 
-    #[Route('/catalogue-cables/{id}/edit', name: 'catalogue_projet_cables_edit', methods: ['GET', 'POST'])]
-    public function edit(
-        CatalogueProjetCables $catalogue,
-        Request $request,
-        EntityManagerInterface $em,
-        FormFactoryInterface $formFactory
-    ): Response {
-        $projet = $catalogue->getProjet();
+    #[Route('/projet/{projetId}/catalogue-cables/{id}/edit', name: 'catalogue_projet_cables_edit', methods: ['GET', 'POST'])]
+    public function edit(int $projetId, CatalogueProjetCables $catalogueProjetCable, Request $request, ProjetRepository $projetRepository, EntityManagerInterface $em): Response
+    {
+        $projet = $projetRepository->find($projetId);
+        if (!$projet || $catalogueProjetCable->getProjet()->getId() !== $projetId) {
+            throw $this->createNotFoundException('Projet ou câble non trouvé');
+        }
+
         $this->denyAccessUnlessGranted('CAN_EDIT_CABLES', $projet);
 
-        $form = $formFactory->create(CatalogueProjetCablesType::class, $catalogue);
+        $form = $this->createForm(CatalogueProjetCablesType::class, $catalogueProjetCable);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $em->flush();
-            $this->addFlash('success', 'Câble du catalogue modifié avec succès');
-            return $this->redirectToRoute('catalogue_projet_cables_list', ['projetId' => $projet->getId()]);
+            $this->addFlash('success', 'Type de câble mis à jour avec succès.');
+
+            return $this->redirectToRoute('catalogue_projet_cables_list', ['projetId' => $projetId]);
         }
 
         return $this->render('catalogue_projet_cables/edit.html.twig', [
             'projet' => $projet,
-            'catalogue' => $catalogue,
+            'catalogue_projet_cable' => $catalogueProjetCable,
             'form' => $form->createView(),
         ]);
     }
 
-    #[Route('/catalogue-cables/{id}/delete', name: 'catalogue_projet_cables_delete', methods: ['POST'])]
-    public function delete(
-        CatalogueProjetCables $catalogue,
-        Request $request,
-        EntityManagerInterface $em
-    ): Response {
-        $projet = $catalogue->getProjet();
+    #[Route('/projet/{projetId}/catalogue-cables/{id}', name: 'catalogue_projet_cables_delete', methods: ['POST'])]
+    public function delete(int $projetId, CatalogueProjetCables $catalogueProjetCable, Request $request, ProjetRepository $projetRepository, EntityManagerInterface $em): Response
+    {
+        $projet = $projetRepository->find($projetId);
+        if (!$projet || $catalogueProjetCable->getProjet()->getId() !== $projetId) {
+            throw $this->createNotFoundException('Projet ou câble non trouvé');
+        }
+
         $this->denyAccessUnlessGranted('CAN_EDIT_CABLES', $projet);
 
-        if (!$this->isCsrfTokenValid('delete_' . $catalogue->getId(), $request->request->get('_token'))) {
-            throw new AccessDeniedException('Token CSRF invalide');
+        if ($this->isCsrfTokenValid('delete_' . $catalogueProjetCable->getId(), $request->request->get('_token'))) {
+            $em->remove($catalogueProjetCable);
+            $em->flush();
+            $this->addFlash('success', 'Type de câble supprimé avec succès.');
+        } else {
+            $this->addFlash('error', 'Token CSRF invalide.');
         }
 
-        $em->remove($catalogue);
-        $em->flush();
-        $this->addFlash('success', 'Câble supprimé du catalogue avec succès');
-        return $this->redirectToRoute('catalogue_projet_cables_list', ['projetId' => $projet->getId()]);
+        return $this->redirectToRoute('catalogue_projet_cables_list', ['projetId' => $projetId]);
     }
 
-#[Route('/catalogue/projet/{projetId}/cables/import', name: 'catalogue_projet_cables_import', methods: ['POST'])]
-    public function importFromModele(int $projetId, Request $request, EntityManagerInterface $em): Response
+    #[Route('/projet/{projetId}/catalogue-cables/import', name: 'catalogue_projet_cables_import', methods: ['POST'])]
+    public function import(int $projetId, Request $request, ProjetRepository $projetRepository, EntityManagerInterface $em): Response
     {
-        $utilisateur = $this->getUser();
-        if (!$utilisateur) {
-            return $this->redirectToRoute('login');
-        }
-
-        $projet = $em->getRepository(Projet::class)->find($projetId);
+        $projet = $projetRepository->find($projetId);
         if (!$projet) {
-            throw $this->createNotFoundException('Projet non trouvé.');
+            throw $this->createNotFoundException('Projet non trouvé');
         }
 
-        // Vérifier les permissions avec CAN_EDIT_CABLES (cohérent avec le template)
-        if (!$this->isGranted('CAN_EDIT_CABLES', $projet)) {
-            throw $this->createAccessDeniedException('Vous n’avez pas le droit d’importer des câbles pour ce projet.');
-        }
+        $this->denyAccessUnlessGranted('CAN_EDIT_CABLES', $projet);
 
         if ($this->isCsrfTokenValid('import_cables_' . $projet->getId(), $request->request->get('_token'))) {
-            $importedCount = 0;
-            $existingCables = $projet->getCatalogueProjetCables()->map(fn($cable) => $cable->getNom())->toArray();
+            $existingCables = $em->getRepository(CatalogueProjetCables::class)->findBy(['projet' => $projet]);
+            $existingCableNames = array_map(fn($cable) => $cable->getNom(), $existingCables);
+
             $modeleCables = $em->getRepository(CatalogueModeleCables::class)->findAll();
 
-            foreach ($modeleCables as $modele) {
-                if (!in_array($modele->getNom(), $existingCables)) {
-                    $projetCable = new CatalogueProjetCables();
-                    $projetCable->setProjet($projet)
-                                ->setNom($modele->getNom())
-                                ->setNombreConducteursMax($modele->getNombreConducteursMax())
-                                ->setPrixUnitaire($modele->getPrixUnitaire())
-                                ->setType($modele->getType());
-                    $em->persist($projetCable);
-                    $projet->addCatalogueProjetCable($projetCable);
-                    $importedCount++;
+            foreach ($modeleCables as $modeleCable) {
+                if (!in_array($modeleCable->getNom(), $existingCableNames)) {
+                    $newCable = new CatalogueProjetCables();
+                    $newCable->setProjet($projet);
+                    $newCable->setNom($modeleCable->getNom());
+                    $newCable->setType($modeleCable->getType());
+                    $newCable->setNbConducteurs($modeleCable->getNbConducteurs());
+                    $newCable->setPrixUnitaire($modeleCable->getPrixUnitaire());
+
+                    foreach ($modeleCable->getCatalogueConducteurs() as $conducteur) {
+                        $newConducteur = new CatalogueConducteur();
+                        $newConducteur->setAttribut($conducteur->getAttribut());
+                        $newCable->addCatalogueConducteur($newConducteur);
+                        $em->persist($newConducteur);
+                    }
+
+                    $em->persist($newCable);
                 }
             }
 
-            $projet->setDateHeureDerniereModification(new \DateTime());
             $em->flush();
-
-            if ($importedCount > 0) {
-                $this->addFlash('success', "$importedCount nouveaux câbles ont été importés depuis le catalogue modèle.");
-            } else {
-                $this->addFlash('info', 'Aucun nouveau câble à importer depuis le catalogue modèle.');
-            }
+            $this->addFlash('success', 'Nouveaux câbles importés avec succès depuis le catalogue modèle.');
         } else {
-            $this->addFlash('danger', 'Erreur de sécurité lors de l’importation des câbles.');
+            $this->addFlash('error', 'Token CSRF invalide.');
         }
 
-        return $this->redirectToRoute('catalogue_projet_cables_list', ['projetId' => $projet->getId()]);
+        return $this->redirectToRoute('catalogue_projet_cables_list', ['projetId' => $projetId]);
     }
 }

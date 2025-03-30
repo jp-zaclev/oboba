@@ -2,6 +2,7 @@
 namespace App\Controller;
 
 use App\Entity\CatalogueModeleBorniers;
+use App\Entity\CatalogueBorne; // Ajouté
 use App\Form\CatalogueModeleBorniersType;
 use App\Form\CatalogueModeleBorniersFilterType;
 use App\Repository\CatalogueModeleBorniersRepository;
@@ -18,6 +19,8 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
  */
 class CatalogueModeleBorniersController extends AbstractController
 {
+    use FilterHelperTrait;
+
     private $repository;
 
     public function __construct(CatalogueModeleBorniersRepository $repository)
@@ -25,7 +28,7 @@ class CatalogueModeleBorniersController extends AbstractController
         $this->repository = $repository;
     }
 
-/**
+    /**
      * @Route("/", name="catalogue_modele_borniers_list", methods={"GET", "POST"})
      */
     public function list(Request $request, PaginatorInterface $paginator): Response
@@ -33,7 +36,6 @@ class CatalogueModeleBorniersController extends AbstractController
         $session = $request->getSession();
         $selectedIds = $session->get('selected_modele_borniers', []);
 
-        // Gestion des suppressions multiples via POST
         if ($request->isMethod('POST')) {
             if (empty($selectedIds)) {
                 $this->addFlash('warning', 'Aucun élément sélectionné pour la suppression.');
@@ -54,7 +56,6 @@ class CatalogueModeleBorniersController extends AbstractController
             return $this->redirectToRoute('catalogue_modele_borniers_list');
         }
 
-        // Mise à jour des sélections via GET (AJAX)
         if ($request->query->has('toggle_selection')) {
             $itemId = $request->query->get('item_id');
             if (in_array($itemId, $selectedIds)) {
@@ -69,31 +70,27 @@ class CatalogueModeleBorniersController extends AbstractController
         $filterForm = $this->createForm(CatalogueModeleBorniersFilterType::class);
         $filterForm->handleRequest($request);
 
-        $qb = $this->repository->createQueryBuilder('b');
+        $qb = $this->repository->createQueryBuilder('b')
+            ->leftJoin('b.catalogueBornes', 'cb')
+            ->addSelect('cb');
 
         if ($filterForm->isSubmitted() && $filterForm->isValid()) {
             $data = $filterForm->getData();
             if ($data['nom']) {
                 $qb->andWhere('b.nom LIKE :nom')->setParameter('nom', '%' . $data['nom'] . '%');
             }
-            if ($data['nombreBornesMin']) {
-                $qb->andWhere('b.nombreBornes >= :bornesMin')->setParameter('bornesMin', $data['nombreBornesMin']);
-            }
-            if ($data['nombreBornesMax']) {
-                $qb->andWhere('b.nombreBornes <= :bornesMax')->setParameter('bornesMax', $data['nombreBornesMax']);
+            if ($data['nombreBornes'] !== null && $data['nombreBornes'] !== '') {
+                $this->applyNumericFilter($qb, 'b.nombreBornes', $data['nombreBornes'], 'bornes');
             }
             if ($data['caracteristiques']) {
                 $qb->andWhere('b.caracteristiques LIKE :caracteristiques')->setParameter('caracteristiques', '%' . $data['caracteristiques'] . '%');
             }
-            if ($data['prixUnitaireMin']) {
-                $qb->andWhere('b.prixUnitaire >= :prixMin')->setParameter('prixMin', $data['prixUnitaireMin']);
-            }
-            if ($data['prixUnitaireMax']) {
-                $qb->andWhere('b.prixUnitaire <= :prixMax')->setParameter('prixMax', $data['prixUnitaireMax']);
+            if ($data['prixUnitaire'] !== null && $data['prixUnitaire'] !== '') {
+                $this->applyNumericFilter($qb, 'b.prixUnitaire', $data['prixUnitaire'], 'prix');
             }
         }
 
-        $borniers = $paginator->paginate(
+        $items = $paginator->paginate(
             $qb->getQuery(),
             $request->query->getInt('page', 1),
             10,
@@ -104,7 +101,7 @@ class CatalogueModeleBorniersController extends AbstractController
         );
 
         return $this->render('catalogue_modele_borniers/list.html.twig', [
-            'borniers' => $borniers,
+            'items' => $items,
             'filter_form' => $filterForm->createView(),
             'selected_ids' => $selectedIds,
         ]);
@@ -121,6 +118,17 @@ class CatalogueModeleBorniersController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager = $this->getDoctrine()->getManager();
+
+            // Si aucune borne n’a été ajoutée manuellement, générer des bornes par défaut
+            if ($bornier->getCatalogueBornes()->isEmpty() && $bornier->getNombreBornes() > 0) {
+                for ($i = 1; $i <= $bornier->getNombreBornes(); $i++) {
+                    $borne = new CatalogueBorne();
+                    $borne->setAttribut("$i"); // Valeur par défaut, ajustable
+                    $bornier->addCatalogueBorne($borne);
+                    $entityManager->persist($borne);
+                }
+            }
+
             $entityManager->persist($bornier);
             $entityManager->flush();
 
@@ -142,7 +150,19 @@ class CatalogueModeleBorniersController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+            $entityManager = $this->getDoctrine()->getManager();
+
+            // Optionnel : appliquer la même logique pour l’édition
+            if ($bornier->getCatalogueBornes()->isEmpty() && $bornier->getNombreBornes() > 0) {
+                for ($i = 1; $i <= $bornier->getNombreBornes(); $i++) {
+                    $borne = new CatalogueBorne();
+                    $borne->setAttribut("$i");
+                    $bornier->addCatalogueBorne($borne);
+                    $entityManager->persist($borne);
+                }
+            }
+
+            $entityManager->flush();
 
             $this->addFlash('success', 'Modèle de bornier modifié avec succès.');
             return $this->redirectToRoute('catalogue_modele_borniers_list');

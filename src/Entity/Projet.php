@@ -9,7 +9,7 @@ use App\Entity\Cable;
 use App\Entity\Connecteur;
 use App\Entity\CatalogueProjetCables;
 use App\Entity\CatalogueProjetConnecteurs;
-use App\Entity\CatalogueProjetBorniers; // Ajout
+use App\Entity\CatalogueProjetBorniers;
 use App\Entity\Equipement;
 use App\Entity\Bornier;
 use App\Entity\WireSignal;
@@ -59,7 +59,7 @@ class Projet
 
     #[ORM\OneToMany(targetEntity: WireSignal::class, mappedBy: 'projet', cascade: ['persist', 'remove'])]
     private Collection $wireSignals;
-    
+
     #[ORM\OneToMany(targetEntity: Localisation::class, mappedBy: 'projet')]
     private Collection $localisations;
 
@@ -79,7 +79,6 @@ class Projet
         $this->localisations = new ArrayCollection();
     }
 
-    // Getters et Setters
     public function getId(): ?int { return $this->id; }
 
     public function getNom(): string { return $this->nom; }
@@ -91,6 +90,9 @@ class Projet
     public function getDateHeureDerniereModification(): \DateTimeInterface { return $this->dateHeureDerniereModification; }
     public function setDateHeureDerniereModification(\DateTimeInterface $date): self { $this->dateHeureDerniereModification = $date; return $this; }
 
+    /**
+     * @return Collection<int, ProjetUtilisateur>
+     */
     public function getProjetUtilisateurs(): Collection
     {
         return $this->projetUtilisateurs;
@@ -115,6 +117,9 @@ class Projet
         return $this;
     }
 
+    /**
+     * @return Collection<int, Cable>
+     */
     public function getCables(): Collection
     {
         return $this->cables;
@@ -139,6 +144,9 @@ class Projet
         return $this;
     }
 
+    /**
+     * @return Collection<int, Connecteur>
+     */
     public function getConnecteurs(): Collection
     {
         return $this->connecteurs;
@@ -163,6 +171,9 @@ class Projet
         return $this;
     }
 
+    /**
+     * @return Collection<int, CatalogueProjetCables>
+     */
     public function getCatalogueProjetCables(): Collection
     {
         return $this->catalogueProjetCables;
@@ -187,6 +198,9 @@ class Projet
         return $this;
     }
 
+    /**
+     * @return Collection<int, CatalogueProjetConnecteurs>
+     */
     public function getCatalogueProjetConnecteurs(): Collection
     {
         return $this->catalogueProjetConnecteurs;
@@ -211,6 +225,9 @@ class Projet
         return $this;
     }
 
+    /**
+     * @return Collection<int, CatalogueProjetBorniers>
+     */
     public function getCatalogueProjetBorniers(): Collection
     {
         return $this->catalogueProjetBorniers;
@@ -235,6 +252,9 @@ class Projet
         return $this;
     }
 
+    /**
+     * @return Collection<int, Equipement>
+     */
     public function getEquipements(): Collection
     {
         return $this->equipements;
@@ -259,6 +279,9 @@ class Projet
         return $this;
     }
 
+    /**
+     * @return Collection<int, Bornier>
+     */
     public function getBorniers(): Collection
     {
         return $this->borniers;
@@ -283,6 +306,9 @@ class Projet
         return $this;
     }
 
+    /**
+     * @return Collection<int, WireSignal>
+     */
     public function getWireSignals(): Collection
     {
         return $this->wireSignals;
@@ -307,42 +333,9 @@ class Projet
         return $this;
     }
 
-    public function getProprietaire(): ?Utilisateur
-    {
-        foreach ($this->projetUtilisateurs as $pu) {
-            if ($pu->getRole() === 'proprietaire') {
-                return $pu->getUtilisateur();
-            }
-        }
-        return null;
-    }
-
-    public function getProprietaires(): array
-    {
-        return $this->projetUtilisateurs
-            ->filter(fn(ProjetUtilisateur $pu) => $pu->getRole() === 'proprietaire' && $pu->getUtilisateur() !== null)
-            ->map(fn(ProjetUtilisateur $pu) => $pu->getUtilisateur())
-            ->toArray();
-    }
-
-    public function getConcepteurs(): Collection
-    {
-        return $this->projetUtilisateurs->filter(function (ProjetUtilisateur $pu) {
-            return $pu->getRole() === 'concepteur';
-        })->map(function (ProjetUtilisateur $pu) {
-            return $pu->getUtilisateur();
-        });
-    }
-
-    public function getLecteurs(): Collection
-    {
-        return $this->projetUtilisateurs->filter(function (ProjetUtilisateur $pu) {
-            return $pu->getRole() === 'lecteur';
-        })->map(function (ProjetUtilisateur $pu) {
-            return $pu->getUtilisateur();
-        });
-    }
-    
+    /**
+     * @return Collection<int, Localisation>
+     */
     public function getLocalisations(): Collection
     {
         return $this->localisations;
@@ -365,5 +358,50 @@ class Projet
             }
         }
         return $this;
+    }
+
+    public function getProprietaire(): ?Utilisateur
+    {
+        foreach ($this->projetUtilisateurs as $pu) {
+            if ($pu->getRole() === 'proprietaire') {
+                return $pu->getUtilisateur();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @return Utilisateur[]
+     */
+    public function getProprietaires(): array
+    {
+        return $this->projetUtilisateurs
+            ->filter(fn(ProjetUtilisateur $pu) => $pu->getRole() === 'proprietaire' && $pu->getUtilisateur() !== null)
+            ->map(fn(ProjetUtilisateur $pu) => $pu->getUtilisateur())
+            ->toArray();
+    }
+
+    /**
+     * @return Collection<int, Utilisateur>
+     */
+    public function getConcepteurs(): Collection
+    {
+        return $this->projetUtilisateurs->filter(function (ProjetUtilisateur $pu) {
+            return $pu->getRole() === 'concepteur';
+        })->map(function (ProjetUtilisateur $pu) {
+            return $pu->getUtilisateur();
+        });
+    }
+
+    /**
+     * @return Collection<int, Utilisateur>
+     */
+    public function getLecteurs(): Collection
+    {
+        return $this->projetUtilisateurs->filter(function (ProjetUtilisateur $pu) {
+            return $pu->getRole() === 'lecteur';
+        })->map(function (ProjetUtilisateur $pu) {
+            return $pu->getUtilisateur();
+        });
     }
 }

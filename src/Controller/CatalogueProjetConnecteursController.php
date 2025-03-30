@@ -2,8 +2,8 @@
 namespace App\Controller;
 
 use App\Entity\CatalogueProjetConnecteurs;
-use App\Entity\CatalogueModeleConnecteurs;
 use App\Entity\Projet;
+use App\Entity\CatalogueModeleConnecteurs;
 use App\Form\CatalogueProjetConnecteursFilterType;
 use App\Form\CatalogueProjetConnecteursType;
 use App\Repository\ProjetRepository;
@@ -16,6 +16,8 @@ use Knp\Component\Pager\PaginatorInterface;
 
 class CatalogueProjetConnecteursController extends BaseController
 {
+    use FilterHelperTrait;
+
     #[Route('/projet/{projetId}/catalogue-connecteurs', name: 'catalogue_projet_connecteurs_list', methods: ['GET', 'POST'])]
     public function list(
         int $projetId,
@@ -35,7 +37,6 @@ class CatalogueProjetConnecteursController extends BaseController
         $session = $request->getSession();
         $selectedIds = $session->get('selected_connecteurs_' . $projetId, []);
 
-        // Gestion des suppressions multiples via POST
         if ($request->isMethod('POST') && $this->isGranted('CAN_EDIT_CONNECTEURS', $projet)) {
             if (empty($selectedIds)) {
                 $this->addFlash('warning', 'Aucun élément sélectionné pour la suppression.');
@@ -55,7 +56,6 @@ class CatalogueProjetConnecteursController extends BaseController
             return $this->redirectToRoute('catalogue_projet_connecteurs_list', ['projetId' => $projetId]);
         }
 
-        // Mise à jour des sélections via GET (AJAX)
         if ($request->query->has('toggle_selection') && $this->isGranted('CAN_EDIT_CONNECTEURS', $projet)) {
             $itemId = $request->query->get('item_id');
             if (in_array($itemId, $selectedIds)) {
@@ -76,30 +76,21 @@ class CatalogueProjetConnecteursController extends BaseController
 
         if ($filterForm->isSubmitted() && $filterForm->isValid()) {
             $data = $filterForm->getData();
-
             if ($data['nom']) {
-                $qb->andWhere('c.nom LIKE :nom')
-                   ->setParameter('nom', '%' . $data['nom'] . '%');
+                $qb->andWhere('c.nom LIKE :nom')->setParameter('nom', '%' . $data['nom'] . '%');
             }
             if ($data['type']) {
-                $qb->andWhere('c.type LIKE :type')
-                   ->setParameter('type', '%' . $data['type'] . '%');
+                $qb->andWhere('c.type LIKE :type')->setParameter('type', '%' . $data['type'] . '%');
             }
-            if ($data['nombreContacts'] !== null) {
-                $qb->andWhere('c.nombreContacts = :nombreContacts')
-                   ->setParameter('nombreContacts', $data['nombreContacts']);
+            if ($data['nombreContacts'] !== null && $data['nombreContacts'] !== '') {
+                $this->applyNumericFilter($qb, 'c.nombreContacts', $data['nombreContacts'], 'contacts');
             }
-            if ($data['prixUnitaireMin'] !== null) {
-                $qb->andWhere('c.prixUnitaire >= :prixUnitaireMin')
-                   ->setParameter('prixUnitaireMin', $data['prixUnitaireMin']);
-            }
-            if ($data['prixUnitaireMax'] !== null) {
-                $qb->andWhere('c.prixUnitaire <= :prixUnitaireMax')
-                   ->setParameter('prixUnitaireMax', $data['prixUnitaireMax']);
+            if ($data['prixUnitaire'] !== null && $data['prixUnitaire'] !== '') {
+                $this->applyNumericFilter($qb, 'c.prixUnitaire', $data['prixUnitaire'], 'prix');
             }
         }
 
-        $connecteurs = $paginator->paginate(
+        $items = $paginator->paginate(
             $qb->getQuery(),
             $request->query->getInt('page', 1),
             10,
@@ -111,7 +102,7 @@ class CatalogueProjetConnecteursController extends BaseController
 
         return $this->render('catalogue_projet_connecteurs/list.html.twig', [
             'projet' => $projet,
-            'connecteurs' => $connecteurs,
+            'items' => $items,
             'filter_form' => $filterForm->createView(),
             'selected_ids' => $selectedIds,
         ]);
@@ -141,7 +132,7 @@ class CatalogueProjetConnecteursController extends BaseController
             $em->persist($connecteur);
             $em->flush();
             $this->addFlash('success', 'Connecteur ajouté au catalogue avec succès');
-            return $this->redirectToRoute('catalogue_projet_connecteurs_list', ['projetId' => $projet->getId()]);
+            return $this->redirectToRoute('catalogue_projet_connecteurs_list', ['projetId' => $projetId]);
         }
 
         return $this->render('catalogue_projet_connecteurs/new.html.twig', [
@@ -150,14 +141,20 @@ class CatalogueProjetConnecteursController extends BaseController
         ]);
     }
 
-    #[Route('/catalogue-connecteurs/{id}/edit', name: 'catalogue_projet_connecteurs_edit', methods: ['GET', 'POST'])]
+    #[Route('/projet/{projetId}/catalogue-connecteurs/{id}/edit', name: 'catalogue_projet_connecteurs_edit', methods: ['GET', 'POST'])]
     public function edit(
+        int $projetId,
         CatalogueProjetConnecteurs $connecteur,
         Request $request,
+        ProjetRepository $projetRepository,
         EntityManagerInterface $em,
         FormFactoryInterface $formFactory
     ): Response {
-        $projet = $connecteur->getProjet();
+        $projet = $projetRepository->find($projetId);
+        if (!$projet || $connecteur->getProjet()->getId() !== $projetId) {
+            throw $this->createNotFoundException('Projet ou connecteur non trouvé');
+        }
+
         $this->denyAccessUnlessGranted('CAN_EDIT_CONNECTEURS', $projet);
 
         $form = $formFactory->create(CatalogueProjetConnecteursType::class, $connecteur);
@@ -166,7 +163,7 @@ class CatalogueProjetConnecteursController extends BaseController
         if ($form->isSubmitted() && $form->isValid()) {
             $em->flush();
             $this->addFlash('success', 'Connecteur du catalogue modifié avec succès');
-            return $this->redirectToRoute('catalogue_projet_connecteurs_list', ['projetId' => $projet->getId()]);
+            return $this->redirectToRoute('catalogue_projet_connecteurs_list', ['projetId' => $projetId]);
         }
 
         return $this->render('catalogue_projet_connecteurs/edit.html.twig', [
@@ -176,49 +173,54 @@ class CatalogueProjetConnecteursController extends BaseController
         ]);
     }
 
-    #[Route('/catalogue-connecteurs/{id}/delete', name: 'catalogue_projet_connecteurs_delete', methods: ['POST'])]
+    #[Route('/projet/{projetId}/catalogue-connecteurs/{id}/delete', name: 'catalogue_projet_connecteurs_delete', methods: ['POST'])]
     public function delete(
+        int $projetId,
         CatalogueProjetConnecteurs $connecteur,
         Request $request,
+        ProjetRepository $projetRepository,
         EntityManagerInterface $em
     ): Response {
-        $projet = $connecteur->getProjet();
+        $projet = $projetRepository->find($projetId);
+        if (!$projet || $connecteur->getProjet()->getId() !== $projetId) {
+            throw $this->createNotFoundException('Projet ou connecteur non trouvé');
+        }
+
         $this->denyAccessUnlessGranted('CAN_EDIT_CONNECTEURS', $projet);
 
-        if (!$this->isCsrfTokenValid('delete_' . $connecteur->getId(), $request->request->get('_token'))) {
-            throw new AccessDeniedException('Token CSRF invalide');
+        if ($this->isCsrfTokenValid('delete_' . $connecteur->getId(), $request->request->get('_token'))) {
+            $em->remove($connecteur);
+            $em->flush();
+            $this->addFlash('success', 'Connecteur supprimé du catalogue avec succès');
+        } else {
+            $this->addFlash('error', 'Token CSRF invalide');
         }
 
-        $em->remove($connecteur);
-        $em->flush();
-        $this->addFlash('success', 'Connecteur supprimé du catalogue avec succès');
-        return $this->redirectToRoute('catalogue_projet_connecteurs_list', ['projetId' => $projet->getId()]);
+        return $this->redirectToRoute('catalogue_projet_connecteurs_list', ['projetId' => $projetId]);
     }
 
-#[Route('/catalogue/projet/{projetId}/connecteurs/import', name: 'catalogue_projet_connecteurs_import', methods: ['POST'])]
-    public function importFromModele(int $projetId, Request $request, EntityManagerInterface $em): Response
-    {
-        $utilisateur = $this->getUser();
-        if (!$utilisateur) {
-            return $this->redirectToRoute('login');
-        }
-
-        $projet = $em->getRepository(Projet::class)->find($projetId);
+    #[Route('/projet/{projetId}/catalogue-connecteurs/import', name: 'catalogue_projet_connecteurs_import', methods: ['POST'])]
+    public function importFromModele(
+        int $projetId,
+        Request $request,
+        ProjetRepository $projetRepository,
+        EntityManagerInterface $em
+    ): Response {
+        $projet = $projetRepository->find($projetId);
         if (!$projet) {
-            throw $this->createNotFoundException('Projet non trouvé.');
+            throw $this->createNotFoundException('Projet non trouvé');
         }
 
-        if (!$this->isGranted('CAN_EDIT_CONNECTEURS', $projet)) {
-            throw $this->createAccessDeniedException('Vous n’avez pas le droit d’importer des connecteurs pour ce projet.');
-        }
+        $this->denyAccessUnlessGranted('CAN_EDIT_CONNECTEURS', $projet);
 
         if ($this->isCsrfTokenValid('import_connecteurs_' . $projet->getId(), $request->request->get('_token'))) {
-            $importedCount = 0;
-            $existingConnecteurs = $projet->getCatalogueProjetConnecteurs()->map(fn($connecteur) => $connecteur->getNom())->toArray();
+            $existingConnecteurs = $em->getRepository(CatalogueProjetConnecteurs::class)->findBy(['projet' => $projet]);
+            $existingNames = array_map(fn($connecteur) => $connecteur->getNom(), $existingConnecteurs);
             $modeleConnecteurs = $em->getRepository(CatalogueModeleConnecteurs::class)->findAll();
 
+            $importedCount = 0;
             foreach ($modeleConnecteurs as $modele) {
-                if (!in_array($modele->getNom(), $existingConnecteurs)) {
+                if (!in_array($modele->getNom(), $existingNames)) {
                     $projetConnecteur = new CatalogueProjetConnecteurs();
                     $projetConnecteur->setProjet($projet)
                                      ->setNom($modele->getNom())
@@ -226,12 +228,10 @@ class CatalogueProjetConnecteursController extends BaseController
                                      ->setNombreContacts($modele->getNombreContacts())
                                      ->setPrixUnitaire($modele->getPrixUnitaire());
                     $em->persist($projetConnecteur);
-                    $projet->addCatalogueProjetConnecteur($projetConnecteur);
                     $importedCount++;
                 }
             }
 
-            $projet->setDateHeureDerniereModification(new \DateTime());
             $em->flush();
 
             if ($importedCount > 0) {
@@ -243,7 +243,6 @@ class CatalogueProjetConnecteursController extends BaseController
             $this->addFlash('danger', 'Erreur de sécurité lors de l’importation des connecteurs.');
         }
 
-        return $this->redirectToRoute('catalogue_projet_connecteurs_list', ['projetId' => $projet->getId()]);
+        return $this->redirectToRoute('catalogue_projet_connecteurs_list', ['projetId' => $projetId]);
     }
-
 }

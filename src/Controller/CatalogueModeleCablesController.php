@@ -1,5 +1,4 @@
 <?php
-// src/Controller/CatalogueModeleCablesController.php
 namespace App\Controller;
 
 use App\Entity\CatalogueModeleCables;
@@ -19,6 +18,8 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
  */
 class CatalogueModeleCablesController extends AbstractController
 {
+    use FilterHelperTrait;
+
     private $repository;
 
     public function __construct(CatalogueModeleCablesRepository $repository)
@@ -26,7 +27,7 @@ class CatalogueModeleCablesController extends AbstractController
         $this->repository = $repository;
     }
 
-/**
+    /**
      * @Route("/", name="catalogue_modele_cables_list", methods={"GET", "POST"})
      */
     public function list(Request $request, PaginatorInterface $paginator): Response
@@ -34,7 +35,6 @@ class CatalogueModeleCablesController extends AbstractController
         $session = $request->getSession();
         $selectedIds = $session->get('selected_modele_cables', []);
 
-        // Gestion des suppressions multiples via POST
         if ($request->isMethod('POST')) {
             if (empty($selectedIds)) {
                 $this->addFlash('warning', 'Aucun élément sélectionné pour la suppression.');
@@ -55,7 +55,6 @@ class CatalogueModeleCablesController extends AbstractController
             return $this->redirectToRoute('catalogue_modele_cables_list');
         }
 
-        // Mise à jour des sélections via GET (AJAX)
         if ($request->query->has('toggle_selection')) {
             $itemId = $request->query->get('item_id');
             if (in_array($itemId, $selectedIds)) {
@@ -70,9 +69,10 @@ class CatalogueModeleCablesController extends AbstractController
         $filterForm = $this->createForm(CatalogueModeleCablesFilterType::class);
         $filterForm->handleRequest($request);
 
-        $qb = $this->repository->createQueryBuilder('c');
+        $qb = $this->repository->createQueryBuilder('c')
+            ->leftJoin('c.catalogueConducteurs', 'cc')
+            ->addSelect('cc');
 
-        // Gestion des filtres
         if ($filterForm->isSubmitted() && $filterForm->isValid()) {
             $data = $filterForm->getData();
             if ($data['nom']) {
@@ -81,21 +81,14 @@ class CatalogueModeleCablesController extends AbstractController
             if ($data['type']) {
                 $qb->andWhere('c.type LIKE :type')->setParameter('type', '%' . $data['type'] . '%');
             }
-            if ($data['nombreConducteursMaxMin']) {
-                $qb->andWhere('c.nombreConducteursMax >= :conducteursMin')->setParameter('conducteursMin', $data['nombreConducteursMaxMin']);
+            if ($data['nbConducteurs'] !== null && $data['nbConducteurs'] !== '') {
+                $this->applyNumericFilter($qb, 'c.nbConducteurs', $data['nbConducteurs'], 'conducteurs');
             }
-            if ($data['nombreConducteursMaxMax']) {
-                $qb->andWhere('c.nombreConducteursMax <= :conducteursMax')->setParameter('conducteursMax', $data['nombreConducteursMaxMax']);
-            }
-            if ($data['prixUnitaireMin']) {
-                $qb->andWhere('c.prixUnitaire >= :prixMin')->setParameter('prixMin', $data['prixUnitaireMin']);
-            }
-            if ($data['prixUnitaireMax']) {
-                $qb->andWhere('c.prixUnitaire <= :prixMax')->setParameter('prixMax', $data['prixUnitaireMax']);
+            if ($data['prixUnitaire'] !== null && $data['prixUnitaire'] !== '') {
+                $this->applyNumericFilter($qb, 'c.prixUnitaire', $data['prixUnitaire'], 'prix');
             }
         }
 
-        // Pagination sans tri manuel
         $catalogues = $paginator->paginate(
             $qb->getQuery(),
             $request->query->getInt('page', 1),
@@ -107,68 +100,65 @@ class CatalogueModeleCablesController extends AbstractController
         );
 
         return $this->render('catalogue_modele_cables/list.html.twig', [
-            'catalogues' => $catalogues,
-            'filter_form' => $filterForm->createView(),
-            'selected_ids' => $selectedIds,
-        ]);
+	    'items' => $catalogues,
+	    'filter_form' => $filterForm->createView(),
+	    'selected_ids' => $selectedIds,
+	]);
     }
 
-
     /**
-     * Ajoute un nouveau modèle de câble
      * @Route("/new", name="catalogue_modele_cables_new", methods={"GET", "POST"})
      */
     public function new(Request $request): Response
     {
-        $catalogue = new CatalogueModeleCables();
-        $form = $this->createForm(CatalogueModeleCablesType::class, $catalogue);
+        $catalogueModeleCable = new CatalogueModeleCables();
+        $form = $this->createForm(CatalogueModeleCablesType::class, $catalogueModeleCable);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager = $this->getDoctrine()->getManager();
-            $entityManager->persist($catalogue);
+            $entityManager->persist($catalogueModeleCable);
             $entityManager->flush();
 
-            $this->addFlash('success', 'Modèle de câble ajouté avec succès.');
+            $this->addFlash('success', 'Modèle de câble créé avec succès.');
             return $this->redirectToRoute('catalogue_modele_cables_list');
         }
 
         return $this->render('catalogue_modele_cables/new.html.twig', [
+            'catalogue_modele_cable' => $catalogueModeleCable,
             'form' => $form->createView(),
         ]);
     }
 
     /**
-     * Modifie un modèle de câble existant
      * @Route("/{id}/edit", name="catalogue_modele_cables_edit", methods={"GET", "POST"})
      */
-    public function edit(Request $request, CatalogueModeleCables $catalogue): Response
+    public function edit(Request $request, CatalogueModeleCables $catalogueModeleCables): Response
     {
-        $form = $this->createForm(CatalogueModeleCablesType::class, $catalogue);
+        $form = $this->createForm(CatalogueModeleCablesType::class, $catalogueModeleCables);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->getDoctrine()->getManager()->flush();
 
-            $this->addFlash('success', 'Modèle de câble modifié avec succès.');
+            $this->addFlash('success', 'Modèle de câble mis à jour avec succès.');
             return $this->redirectToRoute('catalogue_modele_cables_list');
         }
 
         return $this->render('catalogue_modele_cables/edit.html.twig', [
-            'catalogue' => $catalogue,
+            'catalogue' => $catalogueModeleCables,
             'form' => $form->createView(),
         ]);
     }
 
     /**
-     * Supprime un modèle de câble
      * @Route("/{id}", name="catalogue_modele_cables_delete", methods={"POST"})
      */
-    public function delete(Request $request, CatalogueModeleCables $catalogue): Response
+    public function delete(Request $request, CatalogueModeleCables $catalogueModeleCables): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$catalogue->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete'.$catalogueModeleCables->getId(), $request->request->get('_token'))) {
             $entityManager = $this->getDoctrine()->getManager();
-            $entityManager->remove($catalogue);
+            $entityManager->remove($catalogueModeleCables);
             $entityManager->flush();
 
             $this->addFlash('success', 'Modèle de câble supprimé avec succès.');
