@@ -3,10 +3,12 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\CatalogueModeleConnecteursRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity(repositoryClass: CatalogueModeleConnecteursRepository::class)]
 #[ORM\Table(name: 'catalogue_modele_connecteurs')]
-#[ORM\UniqueConstraint(name: 'UNIQ_NOM', columns: ['nom'])]
+#[ORM\Unique ZConstraint(name: 'UNIQ_NOM', columns: ['nom'])]
 class CatalogueModeleConnecteurs
 {
     #[ORM\Id]
@@ -25,6 +27,14 @@ class CatalogueModeleConnecteurs
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: false)]
     private float $prixUnitaire = 0.00;
+
+    #[ORM\OneToMany(targetEntity: CatalogueContact::class, mappedBy: 'catalogueModeleConnecteurs', cascade: ['persist', 'remove'])]
+    private Collection $catalogueContacts;
+
+    public function __construct()
+    {
+        $this->catalogueContacts = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -72,6 +82,30 @@ class CatalogueModeleConnecteurs
     public function setPrixUnitaire(float $prix): self
     {
         $this->prixUnitaire = $prix;
+        return $this;
+    }
+
+    public function getCatalogueContacts(): Collection
+    {
+        return $this->catalogueContacts;
+    }
+
+    public function addCatalogueContact(CatalogueContact $contact): self
+    {
+        if (!$this->catalogueContacts->contains($contact)) {
+            $this->catalogueContacts->add($contact);
+            $contact->setCatalogueModeleConnecteurs($this);
+        }
+        return $this;
+    }
+
+    public function removeCatalogueContact(CatalogueContact $contact): self
+    {
+        if ($this->catalogueContacts->removeElement($contact)) {
+            if ($contact->getCatalogueModeleConnecteurs() === $this) {
+                $contact->setCatalogueModeleConnecteurs(null);
+            }
+        }
         return $this;
     }
 }

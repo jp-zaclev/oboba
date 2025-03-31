@@ -1,7 +1,9 @@
 <?php
 namespace App\Entity;
+
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use App\Entity\Projet;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'catalogue_projet_connecteurs')]
@@ -27,6 +29,14 @@ class CatalogueProjetConnecteurs
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: false)]
     private float $prixUnitaire = 0.00;
+
+    #[ORM\OneToMany(targetEntity: CatalogueContact::class, mappedBy: 'catalogueProjetConnecteur', cascade: ['persist', 'remove'])]
+    private Collection $catalogueContacts;
+
+    public function __construct()
+    {
+        $this->catalogueContacts = new ArrayCollection();
+    }
 
     // Getters et Setters
     public function getId(): ?int
@@ -86,6 +96,33 @@ class CatalogueProjetConnecteurs
     public function setPrixUnitaire(float $prixUnitaire): self
     {
         $this->prixUnitaire = $prixUnitaire;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, CatalogueContact>
+     */
+    public function getCatalogueContacts(): Collection
+    {
+        return $this->catalogueContacts;
+    }
+
+    public function addCatalogueContact(CatalogueContact $catalogueContact): self
+    {
+        if (!$this->catalogueContacts->contains($catalogueContact)) {
+            $this->catalogueContacts[] = $catalogueContact;
+            $catalogueContact->setCatalogueProjetConnecteur($this);
+        }
+        return $this;
+    }
+
+    public function removeCatalogueContact(CatalogueContact $catalogueContact): self
+    {
+        if ($this->catalogueContacts->removeElement($catalogueContact)) {
+            if ($catalogueContact->getCatalogueProjetConnecteur() === $this) {
+                $catalogueContact->setCatalogueProjetConnecteur(null);
+            }
+        }
         return $this;
     }
 }

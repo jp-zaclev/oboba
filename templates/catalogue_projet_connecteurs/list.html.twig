@@ -25,8 +25,8 @@
 
 {% block filter_fields %}
     <div class="col">{{ form_row(filter_form.nom, {'attr': {'class': 'form-control'}}) }}</div>
-    <div class="col">{{ form_row(filter_form.type, {'attr': {'class': 'form-control'}}) }}</div>
     <div class="col">{{ form_row(filter_form.nombreContacts, {'attr': {'class': 'form-control'}}) }}</div>
+    <div class="col">{{ form_row(filter_form.type, {'attr': {'class': 'form-control'}}) }}</div>
     <div class="col">{{ form_row(filter_form.prixUnitaire, {'attr': {'class': 'form-control'}}) }}</div>
 {% endblock %}
 
@@ -36,29 +36,46 @@
 
 {% block table_headers %}
     {% if is_granted('CAN_EDIT_CONNECTEURS', projet) %}
-        <th><input type="checkbox" id="select-all"></th>
+        <th style="width: 5%;"><input type="checkbox" id="select-all"></th>
     {% endif %}
-    <th>{{ knp_pagination_sortable(items, 'Nom', 'c.nom') }}</th>
-    <th>{{ knp_pagination_sortable(items, 'Type', 'c.type') }}</th>
-    <th>{{ knp_pagination_sortable(items, 'Nombre de contacts', 'c.nombreContacts') }}</th>
-    <th>{{ knp_pagination_sortable(items, 'Prix unitaire', 'c.prixUnitaire') }}</th>
-    <th>Actions</th>
+    <th style="width: 20%;">{{ knp_pagination_sortable(items, 'Nom', 'c.nom') }}</th>
+    <th style="width: 15%;">{{ knp_pagination_sortable(items, 'Nombre de contacts', 'c.nombreContacts') }}</th>
+    <th style="width: 15%;">{{ knp_pagination_sortable(items, 'Type', 'c.type') }}</th>
+    <th style="width: 20%;">Contacts</th>
+    <th style="width: 15%;">{{ knp_pagination_sortable(items, 'Prix unitaire', 'c.prixUnitaire') }}</th>
+    <th style="width: 15%;">Actions</th>
 {% endblock %}
 
 {% block table_body %}
     {% for item in items %}
         <tr>
             {% if is_granted('CAN_EDIT_CONNECTEURS', projet) %}
-                <td>
+                <td style="width: 5%;">
                     <input type="checkbox" name="selected_items[]" value="{{ item.id }}"
                            class="select-item" {% if item.id in selected_ids %}checked{% endif %}>
                 </td>
             {% endif %}
-            <td>{{ item.nom }}</td>
-            <td>{{ item.type }}</td>
-            <td>{{ item.nombreContacts }}</td>
-            <td>{{ item.prixUnitaire|number_format(2, '.', ',') }}</td>
-            <td>
+            <td style="width: 20%;">{{ item.nom }}</td>
+            <td style="width: 15%;">{{ item.nombreContacts }}</td>
+            <td style="width: 15%;">{{ item.type }}</td>
+            <td style="width: 20%;">
+                {% if item.catalogueContacts|length > 0 %}
+                    <a href="#" data-bs-toggle="collapse" data-bs-target="#contacts-{{ item.id }}" class="toggle-contacts">
+                        Voir ({{ item.catalogueContacts|length }})
+                    </a>
+                    <div id="contacts-{{ item.id }}" class="collapse" style="max-height: 300px; overflow-y: auto;">
+                        <ul class="mb-0">
+                            {% for contact in item.catalogueContacts %}
+                                <li>{{ contact.identifiant }} ({{ contact.type }})</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% else %}
+                    Aucun contact
+                {% endif %}
+            </td>
+            <td style="width: 15%;">{{ item.prixUnitaire|number_format(2, '.', ',') }}</td>
+            <td style="width: 15%;">
                 {% if is_granted('CAN_EDIT_CONNECTEURS', projet) %}
                     <a href="{{ path('catalogue_projet_connecteurs_edit', {'projetId': projet.id, 'id': item.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
                     <form method="post" action="{{ path('catalogue_projet_connecteurs_delete', {'projetId': projet.id, 'id': item.id}) }}" style="display:inline;" onsubmit="return confirm('Supprimer ce connecteur du catalogue ?');">

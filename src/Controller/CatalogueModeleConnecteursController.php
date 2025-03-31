@@ -2,6 +2,7 @@
 namespace App\Controller;
 
 use App\Entity\CatalogueModeleConnecteurs;
+use App\Entity\CatalogueContact;
 use App\Form\CatalogueModeleConnecteursFilterType;
 use App\Form\CatalogueModeleConnecteursType;
 use Doctrine\ORM\EntityManagerInterface;
@@ -98,46 +99,51 @@ class CatalogueModeleConnecteursController extends BaseController
         ]);
     }
 
-    #[Route("/new", name: "catalogue_modele_connecteurs_new", methods: ["GET", "POST"])]
-    public function new(Request $request, EntityManagerInterface $em, FormFactoryInterface $formFactory): Response
-    {
-        $connecteur = new CatalogueModeleConnecteurs();
-        $form = $formFactory->create(CatalogueModeleConnecteursType::class, $connecteur);
-        $form->handleRequest($request);
+	#[Route("/new", name: "catalogue_modele_connecteurs_new", methods: ["GET", "POST"])]
+	public function new(Request $request, EntityManagerInterface $em): Response
+	{
+	    $connecteur = new CatalogueModeleConnecteurs();
+	    $form = $this->createForm(CatalogueModeleConnecteursType::class, $connecteur);
+	    $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em->persist($connecteur);
-            $em->flush();
-            $this->addFlash('success', 'Modèle de connecteur ajouté avec succès.');
-            return $this->redirectToRoute('catalogue_modele_connecteurs_list');
-        }
+	    if ($form->isSubmitted() && $form->isValid()) {
+		// Pré-remplir les contacts si la collection est vide
+		if ($connecteur->getCatalogueContacts()->isEmpty()) {
+		    $nombreContacts = $connecteur->getNombreContacts();
+		    for ($i = 1; $i <= $nombreContacts; $i++) {
+		        $contact = new CatalogueContact();
+		        $contact->setIdentifiant("$i");
+		        $contact->setType('emission_reception'); // Valeur par défaut, ajustable
+		        $connecteur->addCatalogueContact($contact);
+		    }
+		}
+		$em->persist($connecteur);
+		$em->flush();
+		$this->addFlash('success', 'Modèle de connecteur ajouté avec succès.');
+		return $this->redirectToRoute('catalogue_modele_connecteurs_edit', ['id' => $connecteur->getId()]);
+	    }
 
-        return $this->render('catalogue_modele_connecteurs/new.html.twig', [
-            'form' => $form->createView(),
-        ]);
-    }
+	    return $this->render('catalogue_modele_connecteurs/new.html.twig', [
+		'form' => $form->createView(),
+	    ]);
+	}
+	#[Route('/{id}/edit', name: 'catalogue_modele_connecteurs_edit', methods: ['GET', 'POST'])]
+	public function edit(Request $request, CatalogueModeleConnecteurs $connecteur, EntityManagerInterface $em): Response
+	{
+	    $form = $this->createForm(CatalogueModeleConnecteursType::class, $connecteur);
+	    $form->handleRequest($request);
 
-    #[Route("/{id}/edit", name: "catalogue_modele_connecteurs_edit", methods: ["GET", "POST"])]
-    public function edit(
-        CatalogueModeleConnecteurs $connecteur,
-        Request $request,
-        EntityManagerInterface $em,
-        FormFactoryInterface $formFactory
-    ): Response {
-        $form = $formFactory->create(CatalogueModeleConnecteursType::class, $connecteur);
-        $form->handleRequest($request);
+	    if ($form->isSubmitted() && $form->isValid()) {
+		$em->flush();
+		$this->addFlash('success', 'Modèle de connecteur modifié avec succès.');
+		return $this->redirectToRoute('catalogue_modele_connecteurs_list');
+	    }
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em->flush();
-            $this->addFlash('success', 'Modèle de connecteur modifié avec succès.');
-            return $this->redirectToRoute('catalogue_modele_connecteurs_list');
-        }
-
-        return $this->render('catalogue_modele_connecteurs/edit.html.twig', [
-            'connecteur' => $connecteur,
-            'form' => $form->createView(),
-        ]);
-    }
+	    return $this->render('catalogue_modele_connecteurs/edit.html.twig', [
+		'connecteur' => $connecteur,
+		'form' => $form->createView(),
+	    ]);
+	}
 
     #[Route("/{id}", name: "catalogue_modele_connecteurs_delete", methods: ["POST"])]
     public function delete(CatalogueModeleConnecteurs $connecteur, Request $request, EntityManagerInterface $em): Response

@@ -4,6 +4,7 @@ namespace App\Controller;
 use App\Entity\CatalogueProjetConnecteurs;
 use App\Entity\Projet;
 use App\Entity\CatalogueModeleConnecteurs;
+use App\Entity\CatalogueContact;
 use App\Form\CatalogueProjetConnecteursFilterType;
 use App\Form\CatalogueProjetConnecteursType;
 use App\Repository\ProjetRepository;
@@ -129,6 +130,14 @@ class CatalogueProjetConnecteursController extends BaseController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $nombreContacts = $connecteur->getNombreContacts();
+            for ($i = 0; $i < $nombreContacts; $i++) {
+                $contact = new CatalogueContact();
+                $contact->setIdentifiant( ($i + 1))
+                        ->setType('emission_reception');    // Type par défaut
+                $connecteur->addCatalogueContact($contact);
+            }
+
             $em->persist($connecteur);
             $em->flush();
             $this->addFlash('success', 'Connecteur ajouté au catalogue avec succès');
@@ -227,6 +236,15 @@ class CatalogueProjetConnecteursController extends BaseController
                                      ->setType($modele->getType())
                                      ->setNombreContacts($modele->getNombreContacts())
                                      ->setPrixUnitaire($modele->getPrixUnitaire());
+
+                    // Importer les contacts
+                    foreach ($modele->getCatalogueContacts() as $modeleContact) {
+                        $projetContact = new CatalogueContact();
+                        $projetContact->setIdentifiant($modeleContact->getIdentifiant())
+                                      ->setType($modeleContact->getType());
+                        $projetConnecteur->addCatalogueContact($projetContact);
+                    }
+
                     $em->persist($projetConnecteur);
                     $importedCount++;
                 }
