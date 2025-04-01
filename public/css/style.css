@@ -158,6 +158,11 @@ body {
     background: rgba(0, 123, 255, 0.3);
 }
 
+.dropdown-menu {
+    background-color: transparent !important;
+    border: none; /* Optionnel */
+}
+
 .card {
     background-color: transparent;
     border: 0px solid rgba(0, 0, 0, 0.1);

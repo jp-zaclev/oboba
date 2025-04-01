@@ -35,29 +35,38 @@
 {% block delete_confirm_message %}Voulez-vous vraiment supprimer les borniers sélectionnés ?{% endblock %}
 
 {% block table_headers %}
-    <th><input type="checkbox" id="select-all"></th>
-    <th>{{ knp_pagination_sortable(items, 'Nom', 'b.nom') }}</th>
-    <th>{{ knp_pagination_sortable(items, 'Nombre de bornes', 'b.nombreBornes') }}</th>
-    <th>{{ knp_pagination_sortable(items, 'Caractéristiques', 'b.caracteristiques') }}</th>
-    <th>Bornes</th>
-    <th>{{ knp_pagination_sortable(items, 'Prix unitaire', 'b.prixUnitaire') }}</th>
-    <th>Actions</th>
+    {% if is_granted('CAN_EDIT_BORNIERS', projet) %}
+        <th style="width: 5%;"><input type="checkbox" id="select-all"></th>
+    {% endif %}
+    <th style="width: 25%;">{{ knp_pagination_sortable(items, 'Nom', 'b.nom') }}</th> {# Augmenté de 20% à 25% #}
+    <th style="width: 20%;">{{ knp_pagination_sortable(items, 'Nombre de bornes', 'b.nombreBornes') }}</th> {# Augmenté de 15% à 20% #}
+    <th style="width: 25%;">{{ knp_pagination_sortable(items, 'Caractéristiques', 'b.caracteristiques') }}</th> {# Augmenté de 20% à 25% #}
+    <th style="width: 25%;">Bornes</th> {# Augmenté de 20% à 25% #}
+    <th style="width: 20%;">{{ knp_pagination_sortable(items, 'Prix unitaire', 'b.prixUnitaire') }}</th> {# Augmenté de 15% à 20% #}
 {% endblock %}
 
 {% block table_body %}
     {% for item in items %}
         <tr>
-            <td style="width: 5%;">
-                <input type="checkbox" name="selected_items[]" value="{{ item.id }}"
-                       class="select-item" {% if item.id in selected_ids %}checked{% endif %}>
+            {% if is_granted('CAN_EDIT_BORNIERS', projet) %}
+                <td style="width: 5%;">
+                    <input type="checkbox" name="selected_items[]" value="{{ item.id }}"
+                           class="select-item" {% if item.id in selected_ids %}checked{% endif %}>
+                </td>
+            {% endif %}
+            <td style="width: 25%;">
+                {% if is_granted('CAN_EDIT_BORNIERS', projet) %}
+                    <a href="{{ path('catalogue_projet_borniers_edit', {'projetId': projet.id, 'id': item.id}) }}">{{ item.nom }}</a>
+                {% else %}
+                    {{ item.nom }}
+                {% endif %}
             </td>
-            <td style="width: 20%;">{{ item.nom }}</td>
-            <td style="width: 15%;">{{ item.nombreBornes }}</td>
-            <td style="width: 20%;">{{ item.caracteristiques|default('N/A') }}</td>
-            <td style="width: 20%;">
+            <td style="width: 20%;">{{ item.nombreBornes }}</td>
+            <td style="width: 25%;">{{ item.caracteristiques|default('N/A') }}</td>
+            <td style="width: 25%;">
                 {% if item.catalogueBornes|length > 0 %}
                     <a href="#" data-bs-toggle="collapse" data-bs-target="#bornes-{{ item.id }}" class="toggle-bornes">
-                        Voir ({{item.catalogueBornes|length}} )
+                        Voir ({{ item.catalogueBornes|length }})
                     </a>
                     <div id="bornes-{{ item.id }}" class="collapse" style="max-height: 300px; overflow-y: auto;">
                         <ul class="mb-0">
@@ -70,16 +79,7 @@
                     Aucune borne
                 {% endif %}
             </td>
-            <td style="width: 15%;">{{ item.prixUnitaire|number_format(2, '.', ',') }}</td>
-            <td style="width: 15%;">
-                {% if is_granted('CAN_EDIT_BORNIERS', projet) %}
-                    <a href="{{ path('catalogue_projet_borniers_edit', {'projetId': projet.id, 'id': item.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
-                    <form method="post" action="{{ path('catalogue_projet_borniers_delete', {'projetId': projet.id, 'id': item.id}) }}" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer ce bornier ?');">
-                        <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ item.id) }}">
-                        <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
-                    </form>
-                {% endif %}
-            </td>
+            <td style="width: 20%;">{{ item.prixUnitaire|number_format(2, '.', ',') }}</td>
         </tr>
     {% endfor %}
 {% endblock %}

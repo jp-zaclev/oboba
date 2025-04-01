@@ -44,37 +44,33 @@
 
 {% block table_headers %}
     {% if is_granted('CAN_EDIT_CABLES', projet) %}
-        <th><input type="checkbox" id="select-all"></th>
+        <th style="width: 5%;"><input type="checkbox" id="select-all"></th>
     {% endif %}
-    <th>{{ knp_pagination_sortable(items, 'Nom', 'c.nom') }}</th>
-    <th>{{ knp_pagination_sortable(items, 'Type', 'c.type') }}</th>
-    <th>{{ knp_pagination_sortable(items, 'Nombre de conducteurs', 'c.nbConducteurs') }}</th>
-    <th>{{ knp_pagination_sortable(items, 'Prix unitaire', 'c.prixUnitaire') }}</th>
-    <th>Actions</th>
+    <th style="width: 30%;">{{ knp_pagination_sortable(items, 'Nom', 'c.nom') }}</th> {# Ajusté pour plus d'espace #}
+    <th style="width: 20%;">{{ knp_pagination_sortable(items, 'Type', 'c.type') }}</th>
+    <th style="width: 20%;">{{ knp_pagination_sortable(items, 'Nombre de conducteurs', 'c.nbConducteurs') }}</th>
+    <th style="width: 25%;">{{ knp_pagination_sortable(items, 'Prix unitaire', 'c.prixUnitaire') }}</th>
 {% endblock %}
 
 {% block table_body %}
     {% for catalogue in items %}
         <tr>
             {% if is_granted('CAN_EDIT_CABLES', projet) %}
-                <td>
+                <td style="width: 5%;">
                     <input type="checkbox" name="selected_items[]" value="{{ catalogue.id }}"
                            class="select-item" {% if catalogue.id in selected_ids %}checked{% endif %}>
                 </td>
             {% endif %}
-            <td>{{ catalogue.nom }}</td>
-            <td>{{ catalogue.type }}</td>
-            <td>{{ catalogue.nbConducteurs }}</td>
-            <td>{{ catalogue.prixUnitaire|number_format(2, '.', ',') }}</td>
-            <td>
+            <td style="width: 30%;">
                 {% if is_granted('CAN_EDIT_CABLES', projet) %}
-                    <a href="{{ path('catalogue_projet_cables_edit', {'projetId': projet.id, 'id': catalogue.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
-                    <form method="post" action="{{ path('catalogue_projet_cables_delete', {'projetId': projet.id, 'id': catalogue.id}) }}" style="display:inline;" onsubmit="return confirm('Supprimer ce câble du catalogue ?');">
-                        <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ catalogue.id) }}">
-                        <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
-                    </form>
+                    <a href="{{ path('catalogue_projet_cables_edit', {'projetId': projet.id, 'id': catalogue.id}) }}">{{ catalogue.nom }}</a>
+                {% else %}
+                    {{ catalogue.nom }}
                 {% endif %}
             </td>
+            <td style="width: 20%;">{{ catalogue.type }}</td>
+            <td style="width: 20%;">{{ catalogue.nbConducteurs }}</td>
+            <td style="width: 25%;">{{ catalogue.prixUnitaire|number_format(2, '.', ',') }}</td>
         </tr>
     {% endfor %}
 {% endblock %}

@@ -1,4 +1,3 @@
-{# templates/base_list_catalogue.html.twig #}
 {% extends 'layout/project_layout.html.twig' %}
 
 {% set container_margin = false %}
@@ -27,12 +26,6 @@
         <p class="text-white">{{ block('empty_message') }}</p>
     {% else %}
         <form method="post" id="delete-form" onsubmit="return confirm('{{ block('delete_confirm_message') }}');">
-            {% block delete_button %}
-                <div class="mb-3">
-                    <button type="submit" class="btn btn-danger" id="delete-selected" disabled>Effacer les éléments sélectionnés</button>
-                </div>
-            {% endblock %}
-
             <table class="table table-striped">
                 <thead>
                     <tr>

@@ -29,7 +29,7 @@
                 <div id="bornes-container" data-prototype="{{ form_widget(form.catalogueBornes.vars.prototype)|e('html_attr') }}" style="max-height: 400px; overflow-y: auto;">
                     {% for borneField in form.catalogueBornes %}
                         <div class="borne-row mb-2 d-flex align-items-center">
-                            {{ form_widget(borneField, {'attr': {'class': 'form-control w-75'}}) }}
+                            {{ form_widget(borneField.attribut, {'attr': {'class': 'form-control w-75'}}) }}
                             <button type="button" class="btn btn-danger btn-sm ms-2 remove-borne">Supprimer</button>
                         </div>
                     {% endfor %}

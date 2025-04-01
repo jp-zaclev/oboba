@@ -121,7 +121,7 @@ class CatalogueModeleCablesController extends AbstractController
             $entityManager->flush();
 
             $this->addFlash('success', 'Modèle de câble créé avec succès.');
-            return $this->redirectToRoute('catalogue_modele_cables_list');
+       	    return $this->redirectToRoute('catalogue_modele_cables_edit', ['id' => $catalogueModeleCable->getId()]);
         }
 
         return $this->render('catalogue_modele_cables/new.html.twig', [

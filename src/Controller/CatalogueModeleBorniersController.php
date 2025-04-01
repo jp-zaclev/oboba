@@ -133,7 +133,7 @@ class CatalogueModeleBorniersController extends AbstractController
             $entityManager->flush();
 
             $this->addFlash('success', 'Modèle de bornier ajouté avec succès.');
-            return $this->redirectToRoute('catalogue_modele_borniers_list');
+            return $this->redirectToRoute('catalogue_modele_borniers_edit', ['id' => $bornier->getId()]);
         }
 
         return $this->render('catalogue_modele_borniers/new.html.twig', [

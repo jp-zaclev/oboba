@@ -7,6 +7,19 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     {% block stylesheets %}
         <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+        <style>
+            .dropdown-menu {
+                background-color: transparent !important;
+                border: none; /* Fond transparent */
+            }
+            .dropdown-item {
+                color: #fff !important; /* Texte blanc pour lisibilité */
+            }
+            .dropdown-item:hover, .dropdown-item:focus {
+                color: #fff !important; /* Garde le blanc au survol/clic */
+                background-color: rgba(255, 255, 255, 0.2); /* Fond léger au survol */
+            }
+        </style>
     {% endblock %}
 </head>
 <body>
@@ -21,9 +34,17 @@
                         {% if is_granted('ROLE_ADMIN') %}
                             <a class="nav-link" href="{{ path('projet_list') }}">Gestion des projets</a>
                             <a class="nav-link" href="{{ path('utilisateurs_gestion') }}">Gestion des utilisateurs</a>
-                            <a class="nav-link" href="{{ path('catalogue_modele_cables_list') }}">Catalogue Modèles Câbles</a>
-                            <a class="nav-link" href="{{ path('catalogue_modele_connecteurs_list') }}">Catalogue Modèles Connecteurs</a>
-                            <a class="nav-link" href="{{ path('catalogue_modele_borniers_list') }}">Catalogue Modèles Borniers</a>
+                            {# Menu déroulant pour Catalogues modèles #}
+                            <div class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="cataloguesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Catalogues modèles
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="cataloguesDropdown">
+                                    <li><a class="dropdown-item" href="{{ path('catalogue_modele_cables_list') }}">Câbles</a></li>
+                                    <li><a class="dropdown-item" href="{{ path('catalogue_modele_connecteurs_list') }}">Connecteurs</a></li>
+                                    <li><a class="dropdown-item" href="{{ path('catalogue_modele_borniers_list') }}">Borniers</a></li>
+                                </ul>
+                            </div>
                         {% endif %}
                         <div class="nav-item text-end">
                             <a class="nav-link" href="{{ path('logout') }}">Déconnexion</a>
@@ -52,6 +73,28 @@
     {% endblock %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    {% block javascripts %}{% endblock %}
+    {% block javascripts %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const dropdowns = document.querySelectorAll('.dropdown');
+                dropdowns.forEach(dropdown => {
+                    dropdown.addEventListener('mouseenter', function () {
+                        const toggle = this.querySelector('.dropdown-toggle');
+                        const menu = this.querySelector('.dropdown-menu');
+                        toggle.classList.add('show');
+                        menu.classList.add('show');
+                        toggle.setAttribute('aria-expanded', 'true');
+                    });
+                    dropdown.addEventListener('mouseleave', function () {
+                        const toggle = this.querySelector('.dropdown-toggle');
+                        const menu = this.querySelector('.dropdown-menu');
+                        toggle.classList.remove('show');
+                        menu.classList.remove('show');
+                        toggle.setAttribute('aria-expanded', 'false');
+                    });
+                });
+            });
+        </script>
+    {% endblock %}
 </body>
 </html>
